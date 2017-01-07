@@ -39,7 +39,7 @@ packages:
 - '.'
 - location:
     git: https://github.com/haskell-works/kafka-client
-    commit: 3c6bd8e2afe38778d3793f925e2b4011082a8e84
+    commit: 0be55c1b699a9dff11edb411d35699c76f1153f2
 
 # Dependency packages to be pulled from upstream that are not in the resolver
 # (e.g., acme-missiles-0.3)

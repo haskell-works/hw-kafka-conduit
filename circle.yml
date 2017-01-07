@@ -1,0 +1,25 @@
+machine:
+  ghc:
+    version: 7.10.2
+  services:
+    - docker
+
+dependencies:
+  cache_directories:
+    - "~/.stack"
+
+  pre:
+    - wget -qO- https://get.haskellstack.org/ | sh
+    - "git fetch --unshallow || true"
+
+  override:
+    - stack setup
+    - stack clean
+    - LD_LIBRARY_PATH=/usr/local/lib stack build --test --no-run-tests --haddock --no-haddock-deps
+
+test:
+  override:
+    - stack test
+
+  post:
+    - find . -path "*/test-reports/*" -exec mv {} ${CIRCLE_TEST_REPORTS} \;

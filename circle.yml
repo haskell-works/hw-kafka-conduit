@@ -20,7 +20,7 @@ dependencies:
 
 test:
   override:
-    - stack test
+    - LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib stack test
 
   post:
     - find . -path "*/test-reports/*" -exec mv {} ${CIRCLE_TEST_REPORTS} \;

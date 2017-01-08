@@ -43,4 +43,5 @@ test-suite kafka-client-conduit-test
                      , containers
                      , conduit
                      , conduit-extra
+                     , hspec
                      , kafka-client

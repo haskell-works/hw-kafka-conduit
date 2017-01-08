@@ -5,9 +5,10 @@ zookeeper:
     - 2182:2181
   environment:
     SERVICE_NAME: zookeeper
+    ZOOKEEPER_CLIENT_PORT: 2181
 
 kafka:
-  image: confluentinc/cp-kafka:3.1.1
+  image: confluentinc/cp-kafka
   hostname: kafka
   ports:
     - 9092:9092

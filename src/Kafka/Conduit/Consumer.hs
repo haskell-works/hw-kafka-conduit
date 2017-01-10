@@ -1,18 +1,30 @@
 {-# LANGUAGE TupleSections#-}
-module Kafka.Conduit
+module Kafka.Conduit.Consumer
 ( kafkaSource
 , kafkaSource'
 , newConsumer
 , subscribe
+, newConsumerConf, newConsumerTopicConf
+, ReceivedMessage(..), ConsumerGroupId(..)
 ) where
 
 import Control.Monad.IO.Class
 import Control.Monad (void)
 import Data.Conduit
 import Kafka
-import Kafka.Consumer (ReceivedMessage)
+import Kafka.Consumer (ReceivedMessage, ConsumerGroupId)
 import qualified Kafka.Consumer as K
 import Control.Monad.Trans.Resource
+
+-- | Creates a new kafka configuration for a consumer with a specified 'ConsumerGroupId'.
+newConsumerConf :: MonadIO m
+                => ConsumerGroupId                  -- ^ Consumer group id (a @group.id@ property of a kafka consumer)
+                -> KafkaProps                       -- ^ Extra kafka consumer parameters (see kafka documentation)
+                -> m KafkaConf                      -- ^ Kafka configuration which can be altered before it is used in 'newConsumer'
+newConsumerConf g p = liftIO $ K.newConsumerConf g p
+
+newConsumerTopicConf :: MonadIO m => TopicProps -> m TopicConf
+newConsumerTopicConf = liftIO . K.newConsumerTopicConf
 
 newConsumer :: (MonadResource m)
             => KafkaConf                            -- ^ Consumer config

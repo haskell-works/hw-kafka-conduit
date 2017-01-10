@@ -15,7 +15,7 @@
 # resolver:
 #  name: custom-snapshot
 #  location: "./custom-snapshot.yaml"
-resolver: lts-6.0
+resolver: lts-7.13
 
 # User packages to be built.
 # Various formats can be used as shown in the example below.
@@ -39,7 +39,7 @@ packages:
 - '.'
 - location:
     git: https://github.com/haskell-works/kafka-client
-    commit: 0be55c1b699a9dff11edb411d35699c76f1153f2
+    commit: afb2faf43c407edc4ebad72e19b74a9615cb648d
   extra-dep: true
 
 # Dependency packages to be pulled from upstream that are not in the resolver

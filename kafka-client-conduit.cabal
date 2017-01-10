@@ -29,6 +29,9 @@ library
                      , conduit
                      , conduit-extra
                      , kafka-client
+                     , mtl
+                     , resourcet
+                     , transformers
 
 
 test-suite kafka-client-conduit-test
@@ -45,3 +48,6 @@ test-suite kafka-client-conduit-test
                      , conduit-extra
                      , hspec
                      , kafka-client
+                     , mtl
+                     , resourcet
+                     , transformers

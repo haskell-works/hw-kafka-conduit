@@ -22,9 +22,11 @@ newConsumerConf :: MonadIO m
                 -> KafkaProps                       -- ^ Extra kafka consumer parameters (see kafka documentation)
                 -> m KafkaConf                      -- ^ Kafka configuration which can be altered before it is used in 'newConsumer'
 newConsumerConf g p = liftIO $ K.newConsumerConf g p
+{-# INLINE newConsumerConf #-}
 
 newConsumerTopicConf :: MonadIO m => TopicProps -> m TopicConf
 newConsumerTopicConf = liftIO . K.newConsumerTopicConf
+{-# INLINE newConsumerTopicConf #-}
 
 newConsumer :: (MonadResource m)
             => KafkaConf                            -- ^ Consumer config

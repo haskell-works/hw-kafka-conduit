@@ -7,6 +7,7 @@ Conduit based API for `kafka-client`.
 ```haskell
 import Control.Monad.IO.Class
 import Conduit
+import qualified Data.ByteString as BS
 import Data.Conduit (Source, runConduitRes, (.|))
 import qualified Data.Conduit.List as CL
 import Kafka
@@ -17,7 +18,7 @@ main = do
   first5 <- runConduitRes $ creareKafkaStream .| L.take 5
   print first5
 
-creareKafkaStream :: MonadResource m => Source m (Either KafkaError ReceivedMessage)
+creareKafkaStream :: MonadResource m => Source m (Either KafkaError (ConsumerRecord BS.ByteString BS.ByteString))
 creareKafkaStream = do
   kc  <- newConsumerConf (ConsumerGroupId "test_group") emptyKafkaProps
   tc  <- newConsumerTopicConf (TopicProps [("auto.offset.reset", "earliest")])

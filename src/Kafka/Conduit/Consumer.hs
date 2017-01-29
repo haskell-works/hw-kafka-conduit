@@ -18,11 +18,24 @@ import Kafka.Consumer hiding (newConsumer, closeConsumer, pollMessage)
 import qualified Kafka.Consumer as K
 import Control.Monad.Trans.Resource
 
-kafkaSource' :: MonadResource m
-             => KafkaConsumer
-             -> Timeout
-             -> Source m (Either KafkaError (ConsumerRecord (Maybe BS.ByteString) (Maybe BS.ByteString)))
-kafkaSource' c ts =
+kafkaSourceNoClose :: MonadIO m
+                   => KafkaConsumer
+                   -> Timeout
+                   -> Source m (Either KafkaError (ConsumerRecord (Maybe BS.ByteString) (Maybe BS.ByteString)))
+kafkaSourceNoClose c t = go
+  where
+    go = do
+      msg <- liftIO $ K.pollMessage c t
+      -- stop at some certain cases because it is not goind to be better with time
+      case msg of
+        Left err | isFatal err -> void $ yield (Left err)
+        _ -> yield msg >> go
+
+kafkaSourceAutoClose :: MonadResource m
+                     => KafkaConsumer
+                     -> Timeout
+                     -> Source m (Either KafkaError (ConsumerRecord (Maybe BS.ByteString) (Maybe BS.ByteString)))
+kafkaSourceAutoClose c ts =
   bracketP mkConsumer clConsumer runHandler
   where
     mkConsumer = return c

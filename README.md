@@ -7,7 +7,7 @@ Conduit based API for [kafka-client](https://github.com/haskell-works/kafka-clie
 
 A working example can be found at [example/Main.hs](example/Main.hs)
 
-#### Prerequisite
+### Prerequisites
 Running an example requires Kafka to be available at `localhost:9092`
 
 `docker-compose` can be used for spinning up Kafka environment:

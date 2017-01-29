@@ -1,5 +1,5 @@
 {-# LANGUAGE TupleSections#-}
-module Kafka.Conduit.Consumer
+module Kafka.Conduit.Source
 ( module X
 , newConsumer, closeConsumer
 , kafkaSource, kafkaSourceNoClose, kafkaSourceAutoClose

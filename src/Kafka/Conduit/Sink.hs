@@ -3,6 +3,7 @@ module Kafka.Conduit.Sink
 , newProducer
 , drainOutQueue, closeProducer
 , kafkaSink, kafkaSinkAutoClose, kafkaSinkNoClose
+, ProducerRecord(..)
 ) where
 --
 
@@ -13,6 +14,8 @@ import Data.Conduit
 import Kafka
 import Kafka.Producer (KafkaProducer, ProducerRecord)
 import qualified Kafka.Producer as K
+import Kafka.Types as X
+import Kafka.Producer.Types as X
 import Kafka.Producer.ProducerProperties as X
 
 newProducer :: MonadIO m => ProducerProperties -> m (Either KafkaError KafkaProducer)

@@ -15,6 +15,8 @@ import Control.Monad.Trans.Resource
 import qualified Data.ByteString as BS
 import Data.Conduit
 import Kafka
+import Kafka.Types as X
+import Kafka.Consumer.Types as X
 import Kafka.Consumer.ConsumerProperties as X
 import Kafka.Consumer.Subscription as X
 import Kafka.Consumer hiding (newConsumer, closeConsumer, pollMessage, commitAllOffsets, commitOffsetMessage)

@@ -11,6 +11,7 @@ module Kafka.Conduit.Source
 
 import Control.Monad.IO.Class
 import Control.Monad (void)
+import Control.Monad.Trans.Resource
 import qualified Data.ByteString as BS
 import Data.Conduit
 import Kafka
@@ -18,7 +19,6 @@ import Kafka.Consumer.ConsumerProperties as X
 import Kafka.Consumer.Subscription as X
 import Kafka.Consumer hiding (newConsumer, closeConsumer, pollMessage, commitAllOffsets, commitOffsetMessage)
 import qualified Kafka.Consumer as K
-import Control.Monad.Trans.Resource
 
 newConsumer :: MonadIO m
             => ConsumerProperties

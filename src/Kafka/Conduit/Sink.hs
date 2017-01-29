@@ -4,6 +4,7 @@ module Kafka.Conduit.Sink
 , drainOutQueue, closeProducer
 , kafkaSink, kafkaSinkAutoClose, kafkaSinkNoClose
 , ProducerRecord(..)
+, KafkaError(..), K.RdKafkaRespErrT (..)
 ) where
 --
 

@@ -39,7 +39,7 @@ packages:
 - '.'
 - location:
     git: https://github.com/haskell-works/kafka-client
-    commit: 0ba268197ccf5947825815bf69ebaa252b0d5f9d
+    commit: 1b804e74b06f9c884c73f3b49cc57fd122ca5380
   extra-dep: true
 
 # Dependency packages to be pulled from upstream that are not in the resolver

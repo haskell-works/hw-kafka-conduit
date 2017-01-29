@@ -1,7 +1,9 @@
 {-# LANGUAGE TupleSections#-}
 module Kafka.Conduit.Consumer
 ( module X
-, kafkaSource, kafkaSource'
+, newConsumer, closeConsumer
+, kafkaSource, kafkaSourceNoClose, kafkaSourceAutoClose
+, commitAllOffsets, commitOffsetMessage
 , isFatal
 , ConsumerRecord(..), ConsumerGroupId(..)
 , KafkaError(..), RdKafkaRespErrT(..)
@@ -14,9 +16,33 @@ import Data.Conduit
 import Kafka
 import Kafka.Consumer.ConsumerProperties as X
 import Kafka.Consumer.Subscription as X
-import Kafka.Consumer hiding (newConsumer, closeConsumer, pollMessage)
+import Kafka.Consumer hiding (newConsumer, closeConsumer, pollMessage, commitAllOffsets, commitOffsetMessage)
 import qualified Kafka.Consumer as K
 import Control.Monad.Trans.Resource
+
+newConsumer :: MonadIO m
+            => ConsumerProperties
+            -> Subscription
+            -> m (Either KafkaError KafkaConsumer)
+newConsumer p s = liftIO $ K.newConsumer p s
+
+closeConsumer :: MonadIO m
+              => KafkaConsumer
+              -> m (Maybe KafkaError)
+closeConsumer = liftIO . K.closeConsumer
+
+commitAllOffsets :: MonadIO m
+                 => OffsetCommit
+                 -> KafkaConsumer
+                 -> m (Maybe KafkaError)
+commitAllOffsets o c = liftIO $ K.commitAllOffsets o c
+
+commitOffsetMessage :: MonadIO m
+                    => OffsetCommit
+                    -> KafkaConsumer
+                    -> ConsumerRecord k v
+                    -> m (Maybe KafkaError)
+commitOffsetMessage o c r = liftIO $ K.commitOffsetMessage o c r
 
 kafkaSourceNoClose :: MonadIO m
                    => KafkaConsumer
@@ -39,7 +65,7 @@ kafkaSourceAutoClose c ts =
   bracketP mkConsumer clConsumer runHandler
   where
     mkConsumer = return c
-    clConsumer c' = void $ liftIO (K.closeConsumer c')
+    clConsumer c' = void $ closeConsumer c'
     runHandler c' = do
       msg <- liftIO $ K.pollMessage c' ts
       -- stop at some certain cases because it is not goind to be better with time
@@ -56,10 +82,10 @@ kafkaSource :: MonadResource m
 kafkaSource props sub ts =
   bracketP mkConsumer clConsumer runHandler
   where
-      mkConsumer = liftIO $ K.newConsumer props sub
+      mkConsumer = newConsumer props sub
 
       clConsumer (Left _) = return ()
-      clConsumer (Right c) = void $ liftIO (K.closeConsumer c)
+      clConsumer (Right c) = void $ closeConsumer c
 
       runHandler (Left err) = void $ yield (Left err)
       runHandler (Right c) = do

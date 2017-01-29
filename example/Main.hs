@@ -2,13 +2,14 @@
 module Main where
 
 import Control.Monad (forM_)
-import Control.Monad.Trans.Resource
 import Data.Monoid ((<>))
-import Data.ByteString (ByteString)
 import Kafka.Conduit.Source
 import Kafka.Conduit.Sink
 import Data.Conduit
 import qualified Data.Conduit.List as L
+
+kafkaBroker :: BrokerAddress
+kafkaBroker = BrokerAddress "localhost:9092"
 
 -- Topic to write to and read from
 testTopic :: TopicName
@@ -16,8 +17,8 @@ testTopic = TopicName "kafka-client-conduit-example-topic"
 
 -- Global consumer properties
 consumerProps :: ConsumerProperties
-consumerProps = consumerBrokersList [BrokerAddress "localhost:9092"]
-             <> groupId (ConsumerGroupId "consumer_example_group")
+consumerProps = consumerBrokersList [kafkaBroker]
+             <> groupId (ConsumerGroupId "consumer_conduit_example_group")
              <> noAutoCommit
 
 -- Subscription to topics
@@ -27,7 +28,7 @@ consumerSub = topics [testTopic]
 
 -- Global producer properties
 producerProps :: ProducerProperties
-producerProps = producerBrokersList [BrokerAddress "localhost:9092"]
+producerProps = producerBrokersList [kafkaBroker]
 
 main :: IO ()
 main = do

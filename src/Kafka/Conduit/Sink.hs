@@ -1,10 +1,6 @@
 module Kafka.Conduit.Sink
 ( module X
-, newProducer
-, drainOutQueue, closeProducer
 , kafkaSink, kafkaSinkAutoClose, kafkaSinkNoClose
-, ProducerRecord(..)
-, KafkaError(..), K.RdKafkaRespErrT (..)
 ) where
 --
 
@@ -12,28 +8,7 @@ import Control.Monad.IO.Class
 import Control.Monad (void)
 import Control.Monad.Trans.Resource
 import Data.Conduit
-import Kafka
-import Kafka.Producer (KafkaProducer, ProducerRecord)
-import qualified Kafka.Producer as K
-import Kafka.Types as X
-import Kafka.Producer.Types as X
-import Kafka.Producer.ProducerProperties as X
-
-newProducer :: MonadIO m => ProducerProperties -> m (Either KafkaError KafkaProducer)
-newProducer = liftIO . K.newProducer
-{-# INLINE newProducer #-}
-
-closeProducer :: MonadIO m => KafkaProducer -> m ()
-closeProducer = liftIO . K.closeProducer
-{-# INLINE closeProducer #-}
-
-drainOutQueue :: MonadIO m => KafkaProducer -> m ()
-drainOutQueue = liftIO . K.drainOutQueue
-{-# INLINE drainOutQueue #-}
-
-produceMessage :: MonadIO m => KafkaProducer -> ProducerRecord -> m (Maybe KafkaError)
-produceMessage p r = liftIO $ K.produceMessage p r
-{-# INLINE produceMessage #-}
+import Kafka.Producer as X
 
 kafkaSinkAutoClose :: MonadResource m
                    => KafkaProducer

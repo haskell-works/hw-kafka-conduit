@@ -1,12 +1,8 @@
 {-# LANGUAGE TupleSections#-}
 module Kafka.Conduit.Source
 ( module X
-, newConsumer, closeConsumer
 , kafkaSource, kafkaSourceNoClose, kafkaSourceAutoClose
-, commitAllOffsets, commitOffsetMessage
 , isFatal
-, ConsumerRecord(..), ConsumerGroupId(..)
-, KafkaError(..), RdKafkaRespErrT(..)
 ) where
 
 import Control.Monad.IO.Class
@@ -14,37 +10,8 @@ import Control.Monad (void)
 import Control.Monad.Trans.Resource
 import qualified Data.ByteString as BS
 import Data.Conduit
-import Kafka
-import Kafka.Types as X
-import Kafka.Consumer.Types as X
-import Kafka.Consumer.ConsumerProperties as X
-import Kafka.Consumer.Subscription as X
-import Kafka.Consumer hiding (newConsumer, closeConsumer, pollMessage, commitAllOffsets, commitOffsetMessage)
-import qualified Kafka.Consumer as K
+import Kafka.Consumer as X
 
-newConsumer :: MonadIO m
-            => ConsumerProperties
-            -> Subscription
-            -> m (Either KafkaError KafkaConsumer)
-newConsumer p s = liftIO $ K.newConsumer p s
-
-closeConsumer :: MonadIO m
-              => KafkaConsumer
-              -> m (Maybe KafkaError)
-closeConsumer = liftIO . K.closeConsumer
-
-commitAllOffsets :: MonadIO m
-                 => OffsetCommit
-                 -> KafkaConsumer
-                 -> m (Maybe KafkaError)
-commitAllOffsets o c = liftIO $ K.commitAllOffsets o c
-
-commitOffsetMessage :: MonadIO m
-                    => OffsetCommit
-                    -> KafkaConsumer
-                    -> ConsumerRecord k v
-                    -> m (Maybe KafkaError)
-commitOffsetMessage o c r = liftIO $ K.commitOffsetMessage o c r
 
 kafkaSourceNoClose :: MonadIO m
                    => KafkaConsumer
@@ -53,7 +20,7 @@ kafkaSourceNoClose :: MonadIO m
 kafkaSourceNoClose c t = go
   where
     go = do
-      msg <- liftIO $ K.pollMessage c t
+      msg <- pollMessage c t
       -- stop at some certain cases because it is not goind to be better with time
       case msg of
         Left err | isFatal err -> void $ yield (Left err)
@@ -69,7 +36,7 @@ kafkaSourceAutoClose c ts =
     mkConsumer = return c
     clConsumer c' = void $ closeConsumer c'
     runHandler c' = do
-      msg <- liftIO $ K.pollMessage c' ts
+      msg <- pollMessage c' ts
       -- stop at some certain cases because it is not goind to be better with time
       case msg of
         Left err | isFatal err -> void $ yield (Left err)
@@ -91,7 +58,7 @@ kafkaSource props sub ts =
 
       runHandler (Left err) = void $ yield (Left err)
       runHandler (Right c) = do
-        msg <- liftIO $ K.pollMessage c ts
+        msg <- pollMessage c ts
         -- stop at some certain cases because it is not goind to be better with time
         case msg of
           Left err | isFatal err -> void $ yield (Left err)

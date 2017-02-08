@@ -9,6 +9,7 @@ import Control.Monad (void)
 import Control.Monad.Trans.Resource
 import Data.Conduit
 import Kafka.Producer as X
+import Kafka.Conduit.Utils as X
 
 kafkaSinkAutoClose :: MonadResource m
                    => KafkaProducer

@@ -3,6 +3,7 @@ module Kafka.Conduit.Source
 ( module X
 , kafkaSource, kafkaSourceNoClose, kafkaSourceAutoClose
 , isFatal
+, skipNonFatal
 ) where
 
 import Control.Monad.IO.Class
@@ -10,8 +11,9 @@ import Control.Monad (void)
 import Control.Monad.Trans.Resource
 import qualified Data.ByteString as BS
 import Data.Conduit
+import qualified Data.Conduit.List as L
 import Kafka.Consumer as X
-
+import Kafka.Conduit.Utils as X
 
 kafkaSourceNoClose :: MonadIO m
                    => KafkaConsumer
@@ -63,6 +65,9 @@ kafkaSource props sub ts =
         case msg of
           Left err | isFatal err -> void $ yield (Left err)
           _ -> yield msg >> runHandler (Right c)
+
+skipNonFatal :: Monad m => Conduit (Either KafkaError b) m (Either KafkaError b)
+skipNonFatal = L.filter (either isFatal (const True))
 
 -- | Checks if the error is fatal in a way that it doesn't make sense to retry.
 isFatal :: KafkaError -> Bool

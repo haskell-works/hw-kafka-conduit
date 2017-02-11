@@ -122,8 +122,9 @@ isPartitionEOF e = KafkaResponseError RdKafkaRespErrPartitionEof == e
 
 nonFatalOr :: Monad m => [KafkaError -> Bool] -> Conduit (Either KafkaError b) m (Either KafkaError b)
 nonFatalOr fs =
-  let fun e = isFatal e || and ((\f -> f e) <$> fs)
+  let fun e = or $ (\f -> f e) <$> (isFatal : fs)
    in L.filter (either fun (const True))
+{-# INLINE nonFatalOr #-}
 
 -- | Checks if the error is fatal in a way that it doesn't make sense to retry.
 isFatal :: KafkaError -> Bool

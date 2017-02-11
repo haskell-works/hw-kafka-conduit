@@ -2,8 +2,11 @@
 module Kafka.Conduit.Source
 ( module X
 , kafkaSource, kafkaSourceNoClose, kafkaSourceAutoClose
-, isFatal
-, skipNonFatal
+, mapRecordKey, mapRecordValue, mapRecordKV
+, traverseRecordKey, traverseRecordValue, traverseRecordKV
+, traverseRecordKeyM, traverseRecordValueM, traverseRecordKVM
+, isFatal, isPollTimeout, isPartitionEOF
+, skipNonFatal, nonFatalOr
 ) where
 
 import Control.Monad.IO.Class
@@ -66,8 +69,61 @@ kafkaSource props sub ts =
           Left err | isFatal err -> void $ yield (Left err)
           _ -> yield msg >> runHandler (Right c)
 
+---------------------- Useful ConsumerRecord combinators -----------------------
+mapRecordKey :: Monad m => (k -> k') -> Conduit (ConsumerRecord k v) m (ConsumerRecord k' v)
+mapRecordKey f = L.map (crMapKey f)
+{-# INLINE mapRecordKey #-}
+
+mapRecordValue :: Monad m => (v -> v') -> Conduit (ConsumerRecord k v) m (ConsumerRecord k v')
+mapRecordValue f = L.map (crMapValue f)
+{-# INLINE mapRecordValue #-}
+
+mapRecordKV :: Monad m => (k -> k') -> (v -> v') -> Conduit (ConsumerRecord k v) m (ConsumerRecord k' v')
+mapRecordKV f g = L.map (crMapKV f g)
+{-# INLINE mapRecordKV #-}
+
+traverseRecordKey :: (Functor t, Monad m) => (k -> t k') -> Conduit (ConsumerRecord k v) m (t (ConsumerRecord k' v))
+traverseRecordKey f = L.map (crTraverseKey f)
+{-# INLINE traverseRecordKey #-}
+
+traverseRecordValue :: (Functor t, Monad m) => (v -> t v') -> Conduit (ConsumerRecord k v) m (t (ConsumerRecord k v'))
+traverseRecordValue f = L.map (crTraverseValue f)
+{-# INLINE traverseRecordValue #-}
+
+traverseRecordKV :: (Applicative t, Monad m) => (k -> t k') -> (v -> t v') -> Conduit (ConsumerRecord k v) m (t (ConsumerRecord k' v'))
+traverseRecordKV f g = L.map (crTraverseKV f g)
+{-# INLINE traverseRecordKV #-}
+
+traverseRecordKeyM :: (Functor t, Monad m) => (k -> m (t k')) -> Conduit (ConsumerRecord k v) m (t (ConsumerRecord k' v))
+traverseRecordKeyM f = L.mapM (crTraverseKeyM f)
+{-# INLINE traverseRecordKeyM #-}
+
+traverseRecordValueM :: (Functor t, Monad m) => (v -> m (t v')) -> Conduit (ConsumerRecord k v) m (t (ConsumerRecord k v'))
+traverseRecordValueM f = L.mapM (crTraverseValueM f)
+{-# INLINE traverseRecordValueM #-}
+
+traverseRecordKVM :: (Applicative t, Monad m) => (k -> m (t k')) -> (v -> m (t v')) -> Conduit (ConsumerRecord k v) m (t (ConsumerRecord k' v'))
+traverseRecordKVM f g = L.mapM (crTraverseKVM f g)
+{-# INLINE traverseRecordKVM #-}
+
+--------------------------------------------------------------------------------
+
 skipNonFatal :: Monad m => Conduit (Either KafkaError b) m (Either KafkaError b)
 skipNonFatal = L.filter (either isFatal (const True))
+{-# INLINE skipNonFatal #-}
+
+isPollTimeout :: KafkaError -> Bool
+isPollTimeout e = KafkaResponseError RdKafkaRespErrTimedOut == e
+{-# INLINE isPollTimeout #-}
+
+isPartitionEOF :: KafkaError -> Bool
+isPartitionEOF e = KafkaResponseError RdKafkaRespErrPartitionEof == e
+{-# INLINE isPartitionEOF #-}
+
+nonFatalOr :: Monad m => [KafkaError -> Bool] -> Conduit (Either KafkaError b) m (Either KafkaError b)
+nonFatalOr fs =
+  let fun e = isFatal e || and ((\f -> f e) <$> fs)
+   in L.filter (either fun (const True))
 
 -- | Checks if the error is fatal in a way that it doesn't make sense to retry.
 isFatal :: KafkaError -> Bool

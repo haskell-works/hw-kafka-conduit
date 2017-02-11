@@ -3,6 +3,7 @@ module Kafka.Conduit.Source
 ( module X
 , kafkaSource, kafkaSourceNoClose, kafkaSourceAutoClose
 , mapRecordKey, mapRecordValue, mapRecordKV
+, sequenceRecordKey, sequenceRecordValue, sequenceRecordKV
 , traverseRecordKey, traverseRecordValue, traverseRecordKV
 , traverseRecordKeyM, traverseRecordValueM, traverseRecordKVM
 , isFatal, isPollTimeout, isPartitionEOF
@@ -81,6 +82,15 @@ mapRecordValue f = L.map (crMapValue f)
 mapRecordKV :: Monad m => (k -> k') -> (v -> v') -> Conduit (ConsumerRecord k v) m (ConsumerRecord k' v')
 mapRecordKV f g = L.map (crMapKV f g)
 {-# INLINE mapRecordKV #-}
+
+sequenceRecordKey :: (Functor t, Monad m) => Conduit (ConsumerRecord (t k) v) m (t (ConsumerRecord k v))
+sequenceRecordKey = L.map crSequenceKey
+
+sequenceRecordValue :: (Functor t, Monad m) => Conduit (ConsumerRecord k (t v)) m (t (ConsumerRecord k v))
+sequenceRecordValue = L.map crSequenceValue
+
+sequenceRecordKV :: (Applicative t, Monad m) => Conduit (ConsumerRecord (t k) (t v)) m (t (ConsumerRecord k v))
+sequenceRecordKV = L.map crSequenceKV
 
 traverseRecordKey :: (Functor t, Monad m) => (k -> t k') -> Conduit (ConsumerRecord k v) m (t (ConsumerRecord k' v))
 traverseRecordKey f = L.map (crTraverseKey f)

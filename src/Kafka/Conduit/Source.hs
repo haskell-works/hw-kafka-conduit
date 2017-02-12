@@ -2,14 +2,16 @@
 module Kafka.Conduit.Source
 ( module X
 , kafkaSource, kafkaSourceNoClose, kafkaSourceAutoClose
-, mapRecordKey, mapRecordValue, mapRecordKV
-, sequenceRecordKey, sequenceRecordValue, sequenceRecordKV
-, traverseRecordKey, traverseRecordValue, traverseRecordKV
-, traverseRecordKeyM, traverseRecordValueM, traverseRecordKVM
+, mapFirst, mapF, bimapF
+, sequenceValueFirst, sequenceValue, bisequenceValue
+, traverseValueFirst, traverseValue, bitraverseValue
+, traverseValueFirstM, traverseValueM, bitraverseValueM
 , isFatal, isPollTimeout, isPartitionEOF
 , skipNonFatal, nonFatalOr
 ) where
 
+import Data.Bifunctor
+import Data.Bitraversable
 import Control.Monad.IO.Class
 import Control.Monad (void)
 import Control.Monad.Trans.Resource
@@ -71,50 +73,53 @@ kafkaSource props sub ts =
           _ -> yield msg >> runHandler (Right c)
 
 ---------------------- Useful ConsumerRecord combinators -----------------------
-mapRecordKey :: Monad m => (k -> k') -> Conduit (ConsumerRecord k v) m (ConsumerRecord k' v)
-mapRecordKey f = L.map (crMapKey f)
-{-# INLINE mapRecordKey #-}
+mapFirst :: (Bifunctor t, Monad m) => (k -> k') -> Conduit (t k v) m (t k' v)
+mapFirst f = L.map (first f)
+{-# INLINE mapFirst #-}
 
-mapRecordValue :: Monad m => (v -> v') -> Conduit (ConsumerRecord k v) m (ConsumerRecord k v')
-mapRecordValue f = L.map (crMapValue f)
-{-# INLINE mapRecordValue #-}
+mapF :: (Functor t, Monad m) => (v -> v') -> Conduit (t v) m (t v')
+mapF f = L.map (fmap f)
+{-# INLINE mapF #-}
 
-mapRecordKV :: Monad m => (k -> k') -> (v -> v') -> Conduit (ConsumerRecord k v) m (ConsumerRecord k' v')
-mapRecordKV f g = L.map (crMapKV f g)
-{-# INLINE mapRecordKV #-}
+bimapF :: (Bifunctor t, Monad m) => (k -> k') -> (v -> v') -> Conduit (t k v) m (t k' v')
+bimapF f g = L.map (bimap f g)
+{-# INLINE bimapF #-}
 
-sequenceRecordKey :: (Functor t, Monad m) => Conduit (ConsumerRecord (t k) v) m (t (ConsumerRecord k v))
-sequenceRecordKey = L.map crSequenceKey
+sequenceValueFirst :: (Bitraversable t, Applicative f, Monad m) => Conduit (t (f k) v) m (f (t k v))
+sequenceValueFirst = L.map sequenceFirst
+{-# INLINE sequenceValueFirst #-}
 
-sequenceRecordValue :: (Functor t, Monad m) => Conduit (ConsumerRecord k (t v)) m (t (ConsumerRecord k v))
-sequenceRecordValue = L.map crSequenceValue
+sequenceValue :: (Traversable t, Applicative f, Monad m) => Conduit (t (f v)) m (f (t v))
+sequenceValue = L.map sequenceA
+{-# INLINE sequenceValue #-}
 
-sequenceRecordKV :: (Applicative t, Monad m) => Conduit (ConsumerRecord (t k) (t v)) m (t (ConsumerRecord k v))
-sequenceRecordKV = L.map crSequenceKV
+bisequenceValue :: (Bitraversable t, Applicative f, Monad m) => Conduit (t (f k) (f v)) m (f (t k v))
+bisequenceValue = L.map bisequenceA
+{-# INLINE bisequenceValue #-}
 
-traverseRecordKey :: (Functor t, Monad m) => (k -> t k') -> Conduit (ConsumerRecord k v) m (t (ConsumerRecord k' v))
-traverseRecordKey f = L.map (crTraverseKey f)
-{-# INLINE traverseRecordKey #-}
+traverseValueFirst :: (Bitraversable t, Applicative f, Monad m) => (k -> f k') -> Conduit (t k v) m (f (t k' v))
+traverseValueFirst f = L.map (traverseFirst f)
+{-# INLINE traverseValueFirst #-}
 
-traverseRecordValue :: (Functor t, Monad m) => (v -> t v') -> Conduit (ConsumerRecord k v) m (t (ConsumerRecord k v'))
-traverseRecordValue f = L.map (crTraverseValue f)
-{-# INLINE traverseRecordValue #-}
+traverseValue :: (Traversable t, Applicative f, Monad m) => (v -> f v') -> Conduit (t v) m (f (t v'))
+traverseValue f = L.map (traverse f)
+{-# INLINE traverseValue #-}
 
-traverseRecordKV :: (Applicative t, Monad m) => (k -> t k') -> (v -> t v') -> Conduit (ConsumerRecord k v) m (t (ConsumerRecord k' v'))
-traverseRecordKV f g = L.map (crTraverseKV f g)
-{-# INLINE traverseRecordKV #-}
+bitraverseValue :: (Bitraversable t, Applicative f, Monad m) => (k -> f k') -> (v -> f v') -> Conduit (t k v) m (f (t k' v'))
+bitraverseValue f g = L.map (bitraverse f g)
+{-# INLINE bitraverseValue #-}
 
-traverseRecordKeyM :: (Functor t, Monad m) => (k -> m (t k')) -> Conduit (ConsumerRecord k v) m (t (ConsumerRecord k' v))
-traverseRecordKeyM f = L.mapM (crTraverseKeyM f)
-{-# INLINE traverseRecordKeyM #-}
+traverseValueFirstM :: (Bitraversable t, Applicative f, Monad m) => (k -> m (f k')) -> Conduit (t k v) m (f (t k' v))
+traverseValueFirstM f = L.mapM (traverseFirstM f)
+{-# INLINE traverseValueFirstM #-}
 
-traverseRecordValueM :: (Functor t, Monad m) => (v -> m (t v')) -> Conduit (ConsumerRecord k v) m (t (ConsumerRecord k v'))
-traverseRecordValueM f = L.mapM (crTraverseValueM f)
-{-# INLINE traverseRecordValueM #-}
+traverseValueM :: (Traversable t, Applicative f, Monad m) => (v -> m (f v')) -> Conduit (t v) m (f (t v'))
+traverseValueM f = L.mapM (traverseM f)
+{-# INLINE traverseValueM #-}
 
-traverseRecordKVM :: (Applicative t, Monad m) => (k -> m (t k')) -> (v -> m (t v')) -> Conduit (ConsumerRecord k v) m (t (ConsumerRecord k' v'))
-traverseRecordKVM f g = L.mapM (crTraverseKVM f g)
-{-# INLINE traverseRecordKVM #-}
+bitraverseValueM :: (Bitraversable t, Applicative f, Monad m) => (k -> m (f k')) -> (v -> m (f v')) -> Conduit (t k v) m (f (t k' v'))
+bitraverseValueM f g = L.mapM (bitraverseM f g)
+{-# INLINE bitraverseValueM #-}
 
 --------------------------------------------------------------------------------
 

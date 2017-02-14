@@ -45,5 +45,5 @@ inputStream =
 
 outputStream =
   L.sourceList ["c-one", "c-two", "c-three"]
-  .| L.map (ProducerRecord testTopic UnassignedPartition)
+  .| L.map ((ProducerRecord testTopic UnassignedPartition Nothing) . Just)
   .| kafkaSink producerProps

@@ -2,7 +2,6 @@ module Kafka.Conduit.Sink
 ( module X
 , kafkaSink, kafkaSinkAutoClose, kafkaSinkNoClose
 ) where
---
 
 import Control.Monad.IO.Class
 import Control.Monad (void)
@@ -11,6 +10,8 @@ import Data.Conduit
 import Kafka.Producer as X
 import Kafka.Conduit.Utils as X
 
+-- | Creates a Sink for a given `KafkaProducer`.
+-- The producer will be closed when the Sink is closed.
 kafkaSinkAutoClose :: MonadResource m
                    => KafkaProducer
                    -> Sink ProducerRecord m (Maybe KafkaError)
@@ -27,6 +28,8 @@ kafkaSinkAutoClose prod =
             Nothing -> runHandler p'
             Just err -> return (Just err)
 
+-- | Creates a Sink for a given `KafkaProducer`.
+-- The producer will NOT be closed automatically.
 kafkaSinkNoClose :: MonadIO m
                  => KafkaProducer
                  -> Sink ProducerRecord m (Maybe KafkaError)
@@ -42,6 +45,11 @@ kafkaSinkNoClose prod = go
             Nothing -> go
             Just err -> return (Just err)
 
+-- | Creates a kafka producer for given properties and returns a Sink.
+--
+-- This method of creating a Sink represents a simple case
+-- and does not provide access to `KafkaProducer`. For more complex scenarious
+-- 'kafkaSinkAutoClose' or 'kafkaSinkNoClose' can be used.
 kafkaSink :: MonadResource m
           => ProducerProperties
           -> Sink ProducerRecord m (Maybe KafkaError)

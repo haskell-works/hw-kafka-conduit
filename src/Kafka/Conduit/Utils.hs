@@ -5,6 +5,7 @@ import Control.Monad
 import Control.Monad.Catch
 import Data.Conduit
 
+-- | Throws the left part of a value in a 'MonadThrow' context
 throwLeft :: (MonadThrow m, Exception e) => Conduit (Either e i) m i
 throwLeft = awaitForever (either throwM yield)
 

@@ -1,4 +1,4 @@
-# kafka-client-conduit
+# hw-kafka-onduit
 [![CircleCI](https://circleci.com/gh/haskell-works/hw-kafka-conduit.svg?style=svg&circle-token=ff8f54bf644e2081b5683f3326559767b196814b)](https://circleci.com/gh/haskell-works/hw-kafka-conduit)
 
 Conduit based API for [kafka-client](https://github.com/haskell-works/hw-kafka-client).

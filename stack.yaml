@@ -37,14 +37,10 @@ resolver: lts-7.13
 # will not be run. This is useful for tweaking upstream packages.
 packages:
 - '.'
-- location:
-    git: https://github.com/haskell-works/hw-kafka-client
-    commit: da9f3a3f322f61a748b9c3a1ca4872ca18239621
-  extra-dep: true
 
 # Dependency packages to be pulled from upstream that are not in the resolver
 # (e.g., acme-missiles-0.3)
-extra-deps: []
+extra-deps: [hw-kafka-client-1.0.0]
 
 # Override default flag values for local packages and extra-deps
 flags: {}

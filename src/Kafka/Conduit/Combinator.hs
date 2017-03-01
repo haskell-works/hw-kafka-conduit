@@ -1,7 +1,9 @@
 module Kafka.Conduit.Combinator
   ( batchBy
+  , batchByOrFlush
   , foldYield
   , throwLeft
+  , throwLeftSatisfy
   ) where
 
 import Control.Exception
@@ -12,6 +14,13 @@ import Data.Conduit
 -- | Throws the left part of a value in a 'MonadThrow' context
 throwLeft :: (MonadThrow m, Exception e) => Conduit (Either e i) m i
 throwLeft = awaitForever (either throwM yield)
+
+-- | Throws the left part of a value in a 'MonadThrow' context if the value
+-- satisfies the predicate
+throwLeftSatisfy :: (MonadThrow m, Exception e) => (e -> Bool) -> Conduit (Either e i) m (Either e i)
+throwLeftSatisfy p = awaitForever awaitHandle
+  where awaitHandle (Left e) | p e  = throwM e
+        awaitHandle v               = yield v
 
 -- | Create a conduit that folds with the function f over its input i with its
 -- internal state s and emits outputs [o], then finally emits outputs [o] from

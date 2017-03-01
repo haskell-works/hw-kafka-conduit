@@ -45,10 +45,9 @@ batchBy n = foldYield f g (0 :: Int, [])
     g (_, xs) = [reverse xs]
 
 batchByOrFlush :: Monad m => Int -> Conduit (Maybe a) m [a]
-batchByOrFlush n = do
-  ma <- join <$> await
-  case ma of
-    Just a -> do
-      yield [a]
-      batchByOrFlush n
-    Nothing -> return ()
+batchByOrFlush n = foldYield folder finish (0 :: Int, [])
+  where
+    folder Nothing  (_, xs)                 = ((0    ,   []), [reverse    xs ])
+    folder (Just a) (i, xs) | (i + 1) >= n  = ((0    ,   []), [reverse (a:xs)])
+    folder (Just a) (i, xs)                 = ((i + 1, a:xs),               [])
+    finish (_, xs) = [reverse xs]

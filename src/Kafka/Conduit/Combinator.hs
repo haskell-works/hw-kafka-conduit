@@ -34,3 +34,12 @@ batchBy n = foldYield f g (0 :: Int, [])
       then ((0, []), [reverse (a:xs)])
       else ((i + 1, a:xs), [])
     g (_, xs) = [reverse xs]
+
+batchByOrFlush :: Monad m => Int -> Conduit (Maybe a) m [a]
+batchByOrFlush n = do
+  ma <- join <$> await
+  case ma of
+    Just a -> do
+      yield [a]
+      batchByOrFlush n
+    Nothing -> return ()

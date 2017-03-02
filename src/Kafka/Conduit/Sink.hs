@@ -8,7 +8,7 @@ import Control.Monad (void)
 import Control.Monad.Trans.Resource
 import Data.Conduit
 import Kafka.Producer as X
-import Kafka.Conduit.Utils as X
+import Kafka.Conduit.Combinators as X
 
 -- | Creates a Sink for a given `KafkaProducer`.
 -- The producer will be closed when the Sink is closed.

@@ -23,7 +23,7 @@ import qualified Data.ByteString as BS
 import Data.Conduit
 import qualified Data.Conduit.List as L
 import Kafka.Consumer as X
-import Kafka.Conduit.Utils as X
+import Kafka.Conduit.Combinators as X
 
 -- | Create a `Source` for a given `KafkaConsumer`.
 -- The consumer will NOT be closed automatically when the `Source` is closed.

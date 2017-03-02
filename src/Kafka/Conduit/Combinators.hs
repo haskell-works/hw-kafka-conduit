@@ -1,6 +1,5 @@
-module Kafka.Conduit.Combinator
-  ( batchBy
-  , batchByOrFlush
+module Kafka.Conduit.Combinators
+  ( batchByOrFlush
   , foldYield
   , throwLeft
   , throwLeftSatisfy
@@ -34,15 +33,6 @@ foldYield f g s = do
       forM_ os yield
       foldYield f g s'
     Nothing -> forM_ (g s) yield
-
-batchBy :: Monad m => Int -> Conduit a m [a]
-batchBy n = foldYield f g (0 :: Int, [])
-  where
-    f :: a -> (Int, [a]) -> ((Int, [a]), [[a]])
-    f a (i, xs) = if i >= n - 1
-      then ((0, []), [reverse (a:xs)])
-      else ((i + 1, a:xs), [])
-    g (_, xs) = [reverse xs]
 
 batchByOrFlush :: Monad m => Int -> Conduit (Maybe a) m [a]
 batchByOrFlush n = foldYield folder finish (0 :: Int, [])

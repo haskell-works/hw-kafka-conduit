@@ -5,7 +5,7 @@ module Kafka.Conduit.CombinatorSpec (spec) where
 import Data.Conduit
 import qualified Data.Conduit.List as CL
 import Data.List.Extra
-import Kafka.Conduit.Combinator
+import Kafka.Conduit.Combinators
 import Test.Hspec
 import Test.QuickCheck
 import Prelude as P
@@ -15,12 +15,6 @@ import Prelude as P
 
 spec :: Spec
 spec = describe "Kafka.Conduit.UtilSpec" $ do
-  describe "batchBy" $ do
-    it "Should batch properly" $ do
-      forAll (choose (1 :: Int, 100)) $ \i -> do
-        xs :: [[Int]] <- runConduit $ CL.sourceList [1..100] .| batchBy i .| CL.consume
-        P.concat xs `shouldBe` [1..100]
-        P.filter (/= i) (length <$> P.init xs) `shouldBe` []
   describe "batchByOrFlush" $ do
     it "Should batch by i properly when Nothing is interspersed between every j elements" $ do
       forAll (choose (1 :: Int, 100)) $ \i ->

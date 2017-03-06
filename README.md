@@ -9,18 +9,6 @@ HaskellWorks Kafka ecosystem is described here: https://github.com/haskell-works
 ## Example
 A working example can be found at [example/Main.hs](example/Main.hs)
 
-To build and run the example project:
-```
-$ stack build --flag hw-kafka-conduit:examples
-```
-
-or
-
-```
-$ stack build --exec kafka-conduit-example --flag hw-kafka-conduit:examples
-```
-
-
 ### Prerequisites
 Running an example requires Kafka to be available at `localhost:9092`
 
@@ -32,6 +20,13 @@ $ docker-compose up
 
 ### Running the example
 
+To build and run the example project:
 ```
-stack build --exec kafka-client-conduit-example
+$ stack build --flag hw-kafka-conduit:examples
+```
+
+or
+
+```
+$ stack build --exec kafka-conduit-example --flag hw-kafka-conduit:examples
 ```

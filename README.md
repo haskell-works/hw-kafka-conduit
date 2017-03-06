@@ -7,8 +7,19 @@ Conduit based API for [kafka-client](https://github.com/haskell-works/hw-kafka-c
 HaskellWorks Kafka ecosystem is described here: https://github.com/haskell-works/hw-kafka
 
 ## Example
-
 A working example can be found at [example/Main.hs](example/Main.hs)
+
+To build and run the example project:
+```
+$ stack build --flag hw-kafka-conduit:examples
+```
+
+or
+
+```
+$ stack build --exec kafka-conduit-example --flag hw-kafka-conduit:examples
+```
+
 
 ### Prerequisites
 Running an example requires Kafka to be available at `localhost:9092`

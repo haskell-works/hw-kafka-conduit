@@ -1,8 +1,8 @@
 name:                hw-kafka-conduit
 version:             1.1.2
-synopsis:            Conduit bindings for kafka-client
-homepage:            https://github.com/haskell-works/hw-kafka-client-conduit
-bug-reports:         https://github.com/haskell-works/hw-kafka-client-conduit/issues
+synopsis:            Conduit bindings for hw-kafka-client
+homepage:            https://github.com/haskell-works/hw-kafka-conduit
+bug-reports:         https://github.com/haskell-works/hw-kafka-conduit/issues
 license:             MIT
 license-file:        LICENSE
 author:              Alexey Raga <alexey.raga@gmail.com>
@@ -13,6 +13,11 @@ build-type:          Simple
 -- extra-source-files:
 cabal-version:       >=1.10
 description:         Conduit bindings for hw-kafka-client
+
+flag examples
+  default: False
+  manual: True
+  description: Also compile examples
 
 source-repository head
   type:     git
@@ -29,6 +34,10 @@ executable kafka-conduit-example
                       , containers
                       , resourcet
                       , hw-kafka-conduit
+  if flag(examples)
+    buildable: True
+  else
+    buildable: False
 
 library
   hs-source-dirs:       src

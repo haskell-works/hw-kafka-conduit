@@ -1,13 +1,4 @@
-# This is the complex Travis configuration, which is intended for use
-# on open source libraries which need compatibility across multiple GHC
-# versions, must work with cabal-install, and should be
-# cross-platform. For more information and other options, see:
-#
 # https://docs.haskellstack.org/en/stable/travis_ci/
-#
-# Copy these contents into the root directory of your Github project in a file
-# named .travis.yml
-
 # Use new container infrastructure to enable caching
 sudo: true
 dist: trusty
@@ -24,35 +15,8 @@ cache:
   - $HOME/.cabal
   - $HOME/.stack
 
-# The different configurations we want to test. We have BUILD=cabal which uses
-# cabal-install, and BUILD=stack which uses Stack. More documentation on each
-# of those below.
-#
-# We set the compiler values here to tell Travis to use a different
-# cache file per set of arguments.
-#
-# If you need to have different apt packages for each combination in the
-# matrix, you can use a line such as:
-#     addons: {apt: {packages: [libfcgi-dev,libgmp-dev]}}
 matrix:
   include:
-  # We grab the appropriate GHC and cabal-install versions from hvr's PPA. See:
-  # https://github.com/hvr/multi-ghc-travis
-  #- env: BUILD=cabal GHCVER=7.0.4 CABALVER=1.16 HAPPYVER=1.19.5 ALEXVER=3.1.7
-  #  compiler: ": #GHC 7.0.4"
-  #  addons: {apt: {packages: [cabal-install-1.16,ghc-7.0.4,happy-1.19.5,alex-3.1.7], sources: [hvr-ghc]}}
-  #- env: BUILD=cabal GHCVER=7.2.2 CABALVER=1.16 HAPPYVER=1.19.5 ALEXVER=3.1.7
-  #  compiler: ": #GHC 7.2.2"
-  #  addons: {apt: {packages: [cabal-install-1.16,ghc-7.2.2,happy-1.19.5,alex-3.1.7], sources: [hvr-ghc]}}
-  #- env: BUILD=cabal GHCVER=7.4.2 CABALVER=1.16 HAPPYVER=1.19.5 ALEXVER=3.1.7
-  #  compiler: ": #GHC 7.4.2"
-  #  addons: {apt: {packages: [cabal-install-1.16,ghc-7.4.2,happy-1.19.5,alex-3.1.7], sources: [hvr-ghc]}}
-  # - env: BUILD=cabal GHCVER=7.6.3 CABALVER=1.16 HAPPYVER=1.19.5 ALEXVER=3.1.7
-  #   compiler: ": #GHC 7.6.3"
-  #   addons: {apt: {packages: [cabal-install-1.16,ghc-7.6.3,happy-1.19.5,alex-3.1.7], sources: [hvr-ghc]}}
-  # - env: BUILD=cabal GHCVER=7.8.4 CABALVER=1.18 HAPPYVER=1.19.5 ALEXVER=3.1.7
-  #   compiler: ": #GHC 7.8.4"
-  #   addons: {apt: {packages: [cabal-install-1.18,ghc-7.8.4,happy-1.19.5,alex-3.1.7], sources: [hvr-ghc]}}
   - env: BUILD=cabal GHCVER=7.10.3 CABALVER=1.22 HAPPYVER=1.19.5 ALEXVER=3.1.7
     compiler: ": #GHC 7.10.3"
     addons: {apt: {packages: [cabal-install-1.22,ghc-7.10.3,happy-1.19.5,alex-3.1.7], sources: [hvr-ghc]}}
@@ -71,69 +35,52 @@ matrix:
 
   # The Stack builds. We can pass in arbitrary Stack arguments via the ARGS
   # variable, such as using --stack-yaml to point to a different file.
-  - env: BUILD=stack ARGS=""
+  - env: BUILD=stack ARGS="--flag hw-kafka-conduit:examples"
     compiler: ": #stack default"
     addons: {apt: {packages: [libgmp-dev]}}
 
-  # - env: BUILD=stack ARGS="--resolver lts-2"
-  #   compiler: ": #stack 7.8.4"
-  #   addons: {apt: {packages: [libgmp-dev]}}
-  #
-  # - env: BUILD=stack ARGS="--resolver lts-3"
-  #   compiler: ": #stack 7.10.2"
-  #   addons: {apt: {packages: [libgmp-dev]}}
-
-  - env: BUILD=stack ARGS="--resolver lts-6"
+  - env: BUILD=stack ARGS="--resolver lts-6 --flag hw-kafka-conduit:examples"
     compiler: ": #stack 7.10.3"
     addons: {apt: {packages: [libgmp-dev]}}
 
-  - env: BUILD=stack ARGS="--resolver lts-7"
+  - env: BUILD=stack ARGS="--resolver lts-7 --flag hw-kafka-conduit:examples"
     compiler: ": #stack 8.0.1"
     addons: {apt: {packages: [libgmp-dev]}}
 
-  - env: BUILD=stack ARGS="--resolver lts-8"
+  - env: BUILD=stack ARGS="--resolver lts-8 --flag hw-kafka-conduit:examples"
     compiler: ": #stack 8.0.8"
     addons: {apt: {packages: [libgmp-dev]}}
 
   # Nightly builds are allowed to fail
-  - env: BUILD=stack ARGS="--resolver nightly"
+  - env: BUILD=stack ARGS="--resolver nightly --flag hw-kafka-conduit:examples"
     compiler: ": #stack nightly"
     addons: {apt: {packages: [libgmp-dev]}}
 
   # Build on macOS in addition to Linux
-  - env: BUILD=stack ARGS=""
+  - env: BUILD=stack ARGS="--flag hw-kafka-conduit:examples"
     compiler: ": #stack default osx"
     os: osx
 
-  # Travis includes an macOS which is incompatible with GHC 7.8.4
-  #- env: BUILD=stack ARGS="--resolver lts-2"
-  #  compiler: ": #stack 7.8.4 osx"
-  #  os: osx
-  #
-  # - env: BUILD=stack ARGS="--resolver lts-3"
-  #   compiler: ": #stack 7.10.2 osx"
-  #   os: osx
-
-  - env: BUILD=stack ARGS="--resolver lts-6"
+  - env: BUILD=stack ARGS="--resolver lts-6 --flag hw-kafka-conduit:examples"
     compiler: ": #stack 7.10.3 osx"
     os: osx
 
-  - env: BUILD=stack ARGS="--resolver lts-7"
+  - env: BUILD=stack ARGS="--resolver lts-7 --flag hw-kafka-conduit:examples"
     compiler: ": #stack 8.0.1 osx"
     os: osx
 
-  - env: BUILD=stack ARGS="--resolver lts-8"
+  - env: BUILD=stack ARGS="--resolver lts-8 --flag hw-kafka-conduit:examples"
     compiler: ": #stack 8.0.2 osx"
     os: osx
 
-  - env: BUILD=stack ARGS="--resolver nightly"
+  - env: BUILD=stack ARGS="--resolver nightly --flag hw-kafka-conduit:examples"
     compiler: ": #stack nightly osx"
     os: osx
 
   allow_failures:
   - env: BUILD=cabal GHCVER=7.10.3 CABALVER=1.22 HAPPYVER=1.19.5 ALEXVER=3.1.7
   - env: BUILD=cabal GHCVER=head  CABALVER=head HAPPYVER=1.19.5 ALEXVER=3.1.7
-  - env: BUILD=stack ARGS="--resolver nightly"
+  - env: BUILD=stack ARGS="--resolver nightly --flag hw-kafka-conduit:examples"
 
 before_install:
 # Using compiler above sets CC to an invalid value, so unset it

@@ -1,10 +1,10 @@
-resolver: lts-7.13
+resolver: lts-8.3
 
 packages:
 - '.'
 - location:
     git: https://github.com/haskell-works/hw-kafka-client
-    commit: fd8d9ee61380805d90376e7df4ebe1668b134492
+    commit: 01cf81f87be7309078a6fc92cacbee3d5fdb5ae1
   extra-dep: true
 
 # Dependency packages to be pulled from upstream that are not in the resolver

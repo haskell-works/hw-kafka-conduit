@@ -1,29 +1,67 @@
-machine:
-  ghc:
-    version: 7.10.2
-  services:
-    - docker
+version: 2.0
+jobs:
+  build:
+    working_directory: ~/hw-kafka-conduit
+    docker:
+      - image: fpco/stack-build:latest
 
-dependencies:
-  cache_directories:
-    - "~/.stack"
+      - image: confluentinc/cp-zookeeper
+        environment:
+          ZOOKEEPER_CLIENT_PORT: 2181
 
-  pre:
-    - wget -qO- https://get.haskellstack.org/ | sh
-    - "git fetch --unshallow || true"
+      - image: confluentinc/cp-kafka
+        environment:
+          KAFKA_ZOOKEEPER_CONNECT: "localhost:2181"
+          KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://localhost:9092"
+        
+    environment:
+      LD_LIBRARY_PATH: /usr/local/lib
 
-  override:
-    - scripts/build-librdkafka.sh
-    - stack setup
-    - stack clean
-    - LD_LIBRARY_PATH=/usr/local/lib stack build --test --no-run-tests --haddock --no-haddock-deps
+    steps:
+      - checkout
+      - restore_cache:
+          keys: 
+            - dot-stack-{{ checksum "stack.yaml" }}-{{ checksum "hw-kafka-conduit.cabal" }}
+            - dot-stack
+      - restore_cache:
+          key: stack-work-{{ checksum "stack.yaml" }}
+      - restore_cache:
+          key: librdkafka-{{ checksum "scripts/build-librdkafka.sh" }}
 
-  post:
-    - ./scripts/copy-docs.sh
+      - run:
+          name: Build librdkafka
+          command: ./scripts/build-librdkafka.sh
 
-test:
-  override:
-    - LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib stack test
+      - run:
+          name: Build librdkafka
+          command: ./scripts/build-librdkafka.sh
 
-  post:
-    - find . -path "*/test-reports/*" -exec mv {} ${CIRCLE_TEST_REPORTS} \;
+      - run: stack setup
+      - run: stack build --test --no-run-tests --haddock --no-haddock-deps
+
+      - run: ./scripts/copy-docs.sh
+
+      - run:
+          name: Running unit tests
+          command: stack test
+
+      - save_cache:
+          key: dot-stack-base
+          paths:
+            - ~/.stack
+
+      - save_cache:
+          key: dot-stack-{{ checksum "stack.yaml" }}-{{ checksum "hw-kafka-conduit.cabal" }}
+          paths:
+            - ~/.stack
+
+      - save_cache:
+          key: stack-work-{{ checksum "stack.yaml" }}
+          paths: ~/hw-kafka-conduit/.stack-work
+
+      - save_cache:
+          key: librdkafka-{{ checksum "scripts/build-librdkafka.sh" }}
+          paths: ~/hw-kafka-conduit/.librdkafka
+
+      - store_artifacts:
+          path: /tmp/doc

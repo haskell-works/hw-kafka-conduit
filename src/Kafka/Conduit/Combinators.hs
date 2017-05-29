@@ -1,14 +1,15 @@
 module Kafka.Conduit.Combinators
-  ( batchByOrFlush
+  ( BatchSize(..)
+  , batchByOrFlush
   , foldYield
   , throwLeft
   , throwLeftSatisfy
   ) where
 
-import Control.Exception
-import Control.Monad
-import Control.Monad.Catch
-import Data.Conduit
+import           Control.Exception
+import           Control.Monad
+import           Control.Monad.Catch
+import           Data.Conduit
 
 -- | Throws the left part of a value in a 'MonadThrow' context
 throwLeft :: (MonadThrow m, Exception e) => Conduit (Either e i) m i
@@ -19,7 +20,7 @@ throwLeft = awaitForever (either throwM yield)
 throwLeftSatisfy :: (MonadThrow m, Exception e) => (e -> Bool) -> Conduit (Either e i) m (Either e i)
 throwLeftSatisfy p = awaitForever awaitHandle
   where awaitHandle (Left e) | p e  = throwM e
-        awaitHandle v               = yield v
+        awaitHandle v        = yield v
 
 -- | Create a conduit that folds with the function f over its input i with its
 -- internal state s and emits outputs [o], then finally emits outputs [o] from
@@ -34,8 +35,10 @@ foldYield f g s = do
       foldYield f g s'
     Nothing -> forM_ (g s) yield
 
-batchByOrFlush :: Monad m => Int -> Conduit (Maybe a) m [a]
-batchByOrFlush n = foldYield folder finish (0 :: Int, [])
+newtype BatchSize = BatchSize Int deriving (Show, Eq, Ord)
+
+batchByOrFlush :: Monad m => BatchSize -> Conduit (Maybe a) m [a]
+batchByOrFlush (BatchSize n) = foldYield folder finish (0 :: Int, [])
   where
     folder Nothing  (_, xs)                 = ((0    ,   []), [reverse    xs ])
     folder (Just a) (i, xs) | (i + 1) >= n  = ((0    ,   []), [reverse (a:xs)])

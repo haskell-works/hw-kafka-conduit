@@ -1,6 +1,6 @@
 module Kafka.Conduit.Sink
 ( module X
-, kafkaSink, kafkaSinkAutoClose, kafkaSinkNoClose
+, kafkaSink, kafkaSinkAutoClose, kafkaSinkNoClose, kafkaBatchSinkNoClose
 ) where
 
 import Control.Monad.IO.Class
@@ -44,6 +44,23 @@ kafkaSinkNoClose prod = go
           case res of
             Nothing -> go
             Just err -> return (Just err)
+
+-- | Creates a batching Sink for a given `KafkaProducer`.
+-- The producer will NOT be closed automatically.
+kafkaBatchSinkNoClose :: MonadIO m
+                 => KafkaProducer
+                 -> Sink [ProducerRecord] m [(ProducerRecord, KafkaError)]
+kafkaBatchSinkNoClose prod = go
+  where
+    go = do
+      mbMsg <- await
+      case mbMsg of
+        Nothing -> return []
+        Just msgs -> do
+          res <- produceMessageBatch prod msgs
+          case res of
+            [] -> go
+            xs -> return xs
 
 -- | Creates a kafka producer for given properties and returns a Sink.
 --

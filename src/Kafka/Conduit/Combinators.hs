@@ -1,6 +1,7 @@
 module Kafka.Conduit.Combinators
   ( BatchSize(..)
   , batchByOrFlush
+  , batchByOrFlushEither
   , foldYield
   , throwLeft
   , throwLeftSatisfy
@@ -43,4 +44,12 @@ batchByOrFlush (BatchSize n) = foldYield folder finish (0 :: Int, [])
     folder Nothing  (_, xs)                 = ((0    ,   []), [reverse    xs ])
     folder (Just a) (i, xs) | (i + 1) >= n  = ((0    ,   []), [reverse (a:xs)])
     folder (Just a) (i, xs)                 = ((i + 1, a:xs),               [])
+    finish (_, xs) = [reverse xs]
+
+batchByOrFlushEither :: Monad m => BatchSize -> Conduit (Either e a) m [a]
+batchByOrFlushEither (BatchSize n) = foldYield folder finish (0 :: Int, [])
+  where
+    folder (Left _)  (_, xs)              = ((0    ,    []), [reverse    xs ])
+    folder (Right a) (i, xs) | i + 1 >= n = ((0    ,    []), [reverse (a:xs)])
+    folder (Right a) (i, xs)              = ((i + 1, a:xs ),               [])
     finish (_, xs) = [reverse xs]

@@ -1,7 +1,7 @@
 module Kafka.Conduit.Sink
 ( module X
 , kafkaSink, kafkaSinkAutoClose, kafkaSinkNoClose, kafkaBatchSinkNoClose
-, commitOffsetsSink, flushProducerSink, flushThenCommitSink
+, commitOffsetsSink, flushThenCommitSink
 ) where
 
 import Control.Monad.IO.Class

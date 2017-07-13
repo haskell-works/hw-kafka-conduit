@@ -1,12 +1,14 @@
 module Kafka.Conduit.Sink
 ( module X
 , kafkaSink, kafkaSinkAutoClose, kafkaSinkNoClose, kafkaBatchSinkNoClose
+, commitOffsetsSink, flushProducerSink, flushThenCommitSink
 ) where
 
 import Control.Monad.IO.Class
 import Control.Monad (void)
 import Control.Monad.Trans.Resource
 import Data.Conduit
+import Kafka.Consumer as X
 import Kafka.Producer as X
 import Kafka.Conduit.Combinators as X
 
@@ -86,3 +88,11 @@ kafkaSink props =
         Just msg -> do
           res <- produceMessage prod msg
           runHandler $ maybe (Right prod) Left res
+
+commitOffsetsSink :: MonadIO m => KafkaConsumer -> Sink i m ()
+commitOffsetsSink = awaitForever . const . commitAllOffsets OffsetCommit
+
+flushThenCommitSink :: MonadIO m => KafkaConsumer -> KafkaProducer -> Sink i m ()
+flushThenCommitSink c p = awaitForever . const $ do
+  flushProducer p
+  commitAllOffsets OffsetCommit c

@@ -4,13 +4,16 @@ module Kafka.Conduit.Sink
 , commitOffsetsSink, flushThenCommitSink
 ) where
 
-import Control.Monad.IO.Class
-import Control.Monad (void)
-import Control.Monad.Trans.Resource
-import Data.Conduit
-import Kafka.Consumer as X
-import Kafka.Producer as X
-import Kafka.Conduit.Combinators as X
+import           Control.Monad                (void)
+import           Control.Monad.IO.Class
+import           Control.Monad.Trans.Resource
+import           Data.Conduit
+import           Kafka.Consumer
+
+import           Kafka.Conduit.Combinators    as X
+import           Kafka.Consumer               as X (KafkaConsumer)
+import           Kafka.Producer               as X
+
 
 -- | Creates a Sink for a given `KafkaProducer`.
 -- The producer will be closed when the Sink is closed.
@@ -27,7 +30,7 @@ kafkaSinkAutoClose prod =
         Just msg -> do
           res <- produceMessage p' msg
           case res of
-            Nothing -> runHandler p'
+            Nothing  -> runHandler p'
             Just err -> return (Just err)
 
 -- | Creates a Sink for a given `KafkaProducer`.
@@ -44,7 +47,7 @@ kafkaSinkNoClose prod = go
         Just msg -> do
           res <- produceMessage prod msg
           case res of
-            Nothing -> go
+            Nothing  -> go
             Just err -> return (Just err)
 
 -- | Creates a batching Sink for a given `KafkaProducer`.
@@ -77,7 +80,7 @@ kafkaSink props =
   where
     mkProducer = newProducer props
 
-    clProducer (Left _) = return ()
+    clProducer (Left _)     = return ()
     clProducer (Right prod) = void $ closeProducer prod
 
     runHandler (Left err) = return (Just err)

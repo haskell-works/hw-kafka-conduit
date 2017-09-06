@@ -42,8 +42,7 @@ executable kafka-conduit-example
 library
   hs-source-dirs:       src
   ghc-options:          -Wall
-  exposed-modules:      Kafka.Conduit
-                      , Kafka.Conduit.Combinators
+  exposed-modules:      Kafka.Conduit.Combinators
                       , Kafka.Conduit.Source
                       , Kafka.Conduit.Sink
   default-language:     Haskell2010

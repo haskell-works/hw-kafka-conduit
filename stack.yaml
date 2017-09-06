@@ -1,13 +1,10 @@
-resolver: lts-8.22
+resolver: lts-9.3
 
 packages:
 - '.'
-- location:
-    git: https://github.com/haskell-works/hw-kafka-client
-    commit: d9c360a3eb8c977cb1aea5a53bb2d76e13721fb0
-  extra-dep: true
 
-extra-deps: []
+extra-deps:
+  - hw-kafka-client-2.0.0
 
 flags: {}
 

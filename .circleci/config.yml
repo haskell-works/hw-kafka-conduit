@@ -13,33 +13,38 @@ jobs:
       #   environment:
       #     KAFKA_ZOOKEEPER_CONNECT: "localhost:2181"
       #     KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://localhost:9092"
-        
+
     environment:
       LD_LIBRARY_PATH: /usr/local/lib
 
     steps:
       - checkout
+
+      - run:
+          name: Copying scripts
+          command: |
+            mkdir -p ~/.local/bin
+            cp ./scripts/* ~/.local/bin
+
       - restore_cache:
-          keys: 
+          keys:
             - dot-stack-{{ checksum "stack.yaml" }}-{{ checksum "hw-kafka-conduit.cabal" }}
             - dot-stack
       - restore_cache:
           key: stack-work-{{ checksum "stack.yaml" }}
       - restore_cache:
-          key: librdkafka-{{ checksum "scripts/build-librdkafka.sh" }}
+          key: librdkafka-{{ checksum "scripts/build-librdkafka" }}
 
       - run:
           name: Build librdkafka
-          command: ./scripts/build-librdkafka.sh
-
-      - run:
-          name: Build librdkafka
-          command: ./scripts/build-librdkafka.sh
+          command: build-librdkafka
 
       - run: stack setup
       - run: stack build --test --no-run-tests --haddock --no-haddock-deps
 
-      - run: ./scripts/copy-docs.sh
+      - run:
+          name: Copying docs
+          command: copy-docs
 
       - run:
           name: Running unit tests
@@ -60,8 +65,24 @@ jobs:
           paths: ~/hw-kafka-conduit/.stack-work
 
       - save_cache:
-          key: librdkafka-{{ checksum "scripts/build-librdkafka.sh" }}
+          key: librdkafka-{{ checksum "scripts/build-librdkafka" }}
           paths: ~/hw-kafka-conduit/.librdkafka
 
       - store_artifacts:
           path: /tmp/doc
+
+      - deploy:
+          command: |
+            if [ "$CIRCLE_PROJECT_USERNAME" == "haskell-works" ]; then
+              if [[ "$CIRCLE_BRANCH" == master ]]; then
+                when tag autotag
+              elif [[ "$CIRCLE_TAG" =~ v.* ]]; then
+                setup-cred && publish && publish-docs
+              fi
+            fi
+
+deployment:
+  tagged_builds:
+    tag: /v.*/
+    commands:
+      - echo "Make tags run in 2.0"

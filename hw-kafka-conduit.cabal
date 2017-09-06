@@ -1,5 +1,5 @@
 name:                hw-kafka-conduit
-version:             1.1.4
+version:             2.0.0
 synopsis:            Conduit bindings for hw-kafka-client
 homepage:            https://github.com/haskell-works/hw-kafka-conduit
 bug-reports:         https://github.com/haskell-works/hw-kafka-conduit/issues

@@ -1,4 +1,3 @@
-{-# LANGUAGE TupleSections#-}
 module Kafka.Conduit.Source
 ( -- ** Source
   kafkaSource, kafkaSourceNoClose, kafkaSourceAutoClose
@@ -14,16 +13,16 @@ module Kafka.Conduit.Source
 , module X
 ) where
 
-import Data.Bifunctor
-import Data.Bitraversable
-import Control.Monad.IO.Class
-import Control.Monad (void)
-import Control.Monad.Trans.Resource
-import qualified Data.ByteString as BS
-import Data.Conduit
-import qualified Data.Conduit.List as L
-import Kafka.Consumer as X
-import Kafka.Conduit.Combinators as X
+import           Control.Monad                (void)
+import           Control.Monad.IO.Class
+import           Control.Monad.Trans.Resource
+import           Data.Bifunctor
+import           Data.Bitraversable
+import qualified Data.ByteString              as BS
+import           Data.Conduit
+import qualified Data.Conduit.List            as L
+import           Kafka.Conduit.Combinators    as X
+import           Kafka.Consumer               as X
 
 -- | Create a `Source` for a given `KafkaConsumer`.
 -- The consumer will NOT be closed automatically when the `Source` is closed.
@@ -38,7 +37,7 @@ kafkaSourceNoClose c t = go
       -- stop at some certain cases because it is not goind to be better with time
       case msg of
         Left err | isFatal err -> void $ yield (Left err)
-        _ -> yield msg >> go
+        _        -> yield msg >> go
 
 -- | Create a `Source` for a given `KafkaConsumer`.
 -- The consumer will be closed automatically when the `Source` is closed.
@@ -56,7 +55,7 @@ kafkaSourceAutoClose c ts =
       -- stop at some certain cases because it is not goind to be better with time
       case msg of
         Left err | isFatal err -> void $ yield (Left err)
-        _ -> yield msg >> runHandler c'
+        _        -> yield msg >> runHandler c'
 
 -- | Creates a kafka producer for given properties and returns a `Source`.
 --
@@ -73,7 +72,7 @@ kafkaSource props sub ts =
   where
       mkConsumer = newConsumer props sub
 
-      clConsumer (Left _) = return ()
+      clConsumer (Left _)  = return ()
       clConsumer (Right c) = void $ closeConsumer c
 
       runHandler (Left err) = void $ yield (Left err)
@@ -82,7 +81,7 @@ kafkaSource props sub ts =
         -- stop at some certain cases because it is not goind to be better with time
         case msg of
           Left err | isFatal err -> void $ yield (Left err)
-          _ -> yield msg >> runHandler (Right c)
+          _        -> yield msg >> runHandler (Right c)
 
 ------------------------------- Utitlity functions
 
@@ -223,10 +222,10 @@ skipNonFatalExcept fs =
 -- or is unsafe to ignore.
 isFatal :: KafkaError -> Bool
 isFatal e = case e of
-  KafkaUnknownConfigurationKey _   -> True
-  KafkaInvalidConfigurationValue _ -> True
-  KakfaBadConfiguration            -> True
-  KafkaBadSpecification _          -> True
+  KafkaUnknownConfigurationKey _                              -> True
+  KafkaInvalidConfigurationValue _                            -> True
+  KakfaBadConfiguration                                       -> True
+  KafkaBadSpecification _                                     -> True
 
   -- More of them? Less of them?
   KafkaResponseError RdKafkaRespErrDestroy                    -> True
@@ -244,4 +243,4 @@ isFatal e = case e of
   KafkaResponseError RdKafkaRespErrIllegalSaslState           -> True
   KafkaResponseError RdKafkaRespErrUnsupportedVersion         -> True
 
-  _ -> False
+  _                                                           -> False

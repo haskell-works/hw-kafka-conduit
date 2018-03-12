@@ -14,7 +14,7 @@ fi
 
 if [ -f $VERSION_FILE ] && [ "$(cat $VERSION_FILE)" == $RDKAFKA_VER ]; then
     echo "Required version found, using it"
-    sudo cp -r $DST/* /usr/local/
+    sudo cp -r $DST/* /usr/
     exit 0
 fi
 
@@ -27,7 +27,7 @@ git reset $RDKAFKA_VER --hard
 ./configure --prefix $DST
 cd src
 make && make install
-sudo cp -r $DST/* /usr/local/
+sudo cp -r $DST/* /usr/
 
 echo "Writing version file to $VERSION_FILE"
 echo $RDKAFKA_VER > $VERSION_FILE

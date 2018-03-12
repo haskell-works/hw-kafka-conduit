@@ -94,7 +94,7 @@ kafkaSink props =
           runHandler $ maybe (Right prod) Left res
 
 -- | Ignores incoming messages and commits offsets. Commit errors are ignored.
--- This functionality should not exist as a Sink and will be removed in a furure versions.
+-- This functionality should not exist as a Sink and will be removed in furure versions.
 -- Consider having an effect instead:
 --
 -- > mapMC (\_ -> commitAllOffsets OffsetCommit consumer)
@@ -103,7 +103,7 @@ commitOffsetsSink :: MonadIO m => KafkaConsumer -> Sink i m ()
 commitOffsetsSink = flip commitOffsetsSink' (const $ pure ())
 
 -- | Ignores incoming messages and commits offsets. Commit errors are handled with 'handleError' effect.
--- This functionality should not exist as a Sink and will be removed in a furure versions.
+-- This functionality should not exist as a Sink and will be removed in furure versions.
 -- Consider having an effect instead:
 --
 -- > mapMC (\_ -> commitAllOffsets OffsetCommit consumer >>= handleError)
@@ -117,7 +117,7 @@ commitOffsetsSink' consumer handleError = L.mapM_ $ \_ -> do
 
 -- | Ignores incoming messages and commits offsets, but makes sure that 'producer' has an empty outgoing queue.
 -- Commit errors are ignored.
--- This functionality should not exist as a Sink and will be removed in a furure versions.
+-- This functionality should not exist as a Sink and will be removed in furure versions.
 -- Consider having an effect instead:
 --
 -- > mapMC (\_ -> flushProducer producer >>= commitAllOffsets OffsetCommit consumer)
@@ -127,7 +127,7 @@ flushThenCommitSink consumer producer = flushThenCommitSink' consumer producer (
 
 -- | Ignores incoming messages and commits offsets, but makes sure that 'producer' has an empty outgoing queue.
 -- Commit errors are handled with 'handleError' effect.
--- This functionality should not exist as a Sink and will be removed in a furure versions.
+-- This functionality should not exist as a Sink and will be removed in furure versions.
 -- Consider having an effect instead:
 --
 -- > mapMC (\_ -> flushProducer producer >>= commitAllOffsets OffsetCommit consumer >>= handleError)

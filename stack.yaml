@@ -1,10 +1,10 @@
-resolver: lts-9.3
+resolver: lts-10.8
 
 packages:
 - '.'
 
 extra-deps:
-  - hw-kafka-client-2.0.0
+  - hw-kafka-client-2.3.3
 
 flags: {}
 

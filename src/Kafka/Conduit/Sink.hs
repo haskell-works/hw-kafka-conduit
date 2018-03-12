@@ -8,6 +8,7 @@ import           Control.Monad                (void)
 import           Control.Monad.IO.Class
 import           Control.Monad.Trans.Resource
 import           Data.Conduit
+import qualified Data.Conduit.List            as L
 import           Kafka.Consumer
 
 import           Kafka.Conduit.Combinators    as X
@@ -92,10 +93,49 @@ kafkaSink props =
           res <- produceMessage prod msg
           runHandler $ maybe (Right prod) Left res
 
+-- | Ignores incoming messages and commits offsets. Commit errors are ignored.
+-- This functionality should not exist as a Sink and will be removed in future versions.
+-- Consider having an effect instead:
+--
+-- > mapMC (\_ -> commitAllOffsets OffsetCommit consumer)
+{-# DEPRECATED commitOffsetsSink "Conceptually wrong thing to do. Does not require library support. Consider calling 'commitAllOffsets' when appropriate." #-}
 commitOffsetsSink :: MonadIO m => KafkaConsumer -> Sink i m ()
-commitOffsetsSink = awaitForever . const . commitAllOffsets OffsetCommit
+commitOffsetsSink = flip commitOffsetsSink' (const $ pure ())
 
+-- | Ignores incoming messages and commits offsets. Commit errors are handled with 'handleError' effect.
+-- This functionality should not exist as a Sink and will be removed in future versions.
+-- Consider having an effect instead:
+--
+-- > mapMC (\_ -> commitAllOffsets OffsetCommit consumer >>= handleError)
+{-# DEPRECATED commitOffsetsSink' "Conceptually wrong thing to do. Does not require library support. Consider calling 'commitAllOffsets' when appropriate." #-}
+commitOffsetsSink':: MonadIO m => KafkaConsumer -> (KafkaError -> m ()) -> Sink i m ()
+commitOffsetsSink' consumer handleError = L.mapM_ $ \_ -> do
+  res <- commitAllOffsets OffsetCommit consumer
+  case res of
+    Nothing  -> pure ()
+    Just err -> handleError err
+
+-- | Ignores incoming messages and commits offsets, but makes sure that 'producer' has an empty outgoing queue.
+-- Commit errors are ignored.
+-- This functionality should not exist as a Sink and will be removed in future versions.
+-- Consider having an effect instead:
+--
+-- > mapMC (\_ -> flushProducer producer >>= commitAllOffsets OffsetCommit consumer)
+{-# DEPRECATED flushThenCommitSink "Conceptually wrong thing to do. Does not require library support. Consider calling 'flushProducer >>= commitAllOffsets' when appropriate." #-}
 flushThenCommitSink :: MonadIO m => KafkaConsumer -> KafkaProducer -> Sink i m ()
-flushThenCommitSink c p = awaitForever . const $ do
-  flushProducer p
-  commitAllOffsets OffsetCommit c
+flushThenCommitSink consumer producer = flushThenCommitSink' consumer producer (const $ pure ())
+
+-- | Ignores incoming messages and commits offsets, but makes sure that 'producer' has an empty outgoing queue.
+-- Commit errors are handled with 'handleError' effect.
+-- This functionality should not exist as a Sink and will be removed in future versions.
+-- Consider having an effect instead:
+--
+-- > mapMC (\_ -> flushProducer producer >>= commitAllOffsets OffsetCommit consumer >>= handleError)
+{-# DEPRECATED flushThenCommitSink' "Conceptually wrong thing to do. Does not require library support. Consider calling 'flushProducer >>= commitAllOffsets' when appropriate." #-}
+flushThenCommitSink' :: MonadIO m => KafkaConsumer -> KafkaProducer -> (KafkaError -> m ()) -> Sink i m ()
+flushThenCommitSink' consumer producer handleError = L.mapM_ $ \_ -> do
+  flushProducer producer
+  res <- commitAllOffsets OffsetCommit consumer
+  case res of
+    Nothing  -> pure ()
+    Just err -> handleError err

@@ -1,12 +1,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Main where
 
-import Control.Monad (forM_)
-import Data.Monoid ((<>))
-import Kafka.Conduit.Source
-import Kafka.Conduit.Sink
-import Data.Conduit
-import qualified Data.Conduit.List as L
+import           Control.Monad        (forM_)
+import           Data.Conduit
+import qualified Data.Conduit.List    as L
+import           Data.Monoid          ((<>))
+import           Kafka.Conduit.Sink   as KSnk
+import           Kafka.Conduit.Source as KSrc
 
 kafkaBroker :: BrokerAddress
 kafkaBroker = BrokerAddress "localhost:9092"
@@ -17,7 +17,7 @@ testTopic = TopicName "kafka-client-conduit-example-topic"
 
 -- Global consumer properties
 consumerProps :: ConsumerProperties
-consumerProps = consumerBrokersList [kafkaBroker]
+consumerProps = KSrc.brokersList [kafkaBroker]
              <> groupId (ConsumerGroupId "consumer_conduit_example_group")
              <> noAutoCommit
 
@@ -28,7 +28,7 @@ consumerSub = topics [testTopic]
 
 -- Global producer properties
 producerProps :: ProducerProperties
-producerProps = producerBrokersList [kafkaBroker]
+producerProps = KSnk.brokersList [kafkaBroker]
 
 main :: IO ()
 main = do

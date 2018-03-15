@@ -224,7 +224,7 @@ isFatal :: KafkaError -> Bool
 isFatal e = case e of
   KafkaUnknownConfigurationKey _                              -> True
   KafkaInvalidConfigurationValue _                            -> True
-  KakfaBadConfiguration                                       -> True
+  KafkaBadConfiguration                                       -> True
   KafkaBadSpecification _                                     -> True
 
   -- More of them? Less of them?

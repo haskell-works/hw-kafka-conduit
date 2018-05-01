@@ -1,5 +1,5 @@
 name:                hw-kafka-conduit
-version:             2.4.0
+version:             2.5.0
 synopsis:            Conduit bindings for hw-kafka-client
 homepage:            https://github.com/haskell-works/hw-kafka-conduit
 bug-reports:         https://github.com/haskell-works/hw-kafka-conduit/issues
@@ -53,7 +53,7 @@ library
                       , conduit
                       , conduit-extra
                       , exceptions
-                      , hw-kafka-client
+                      , hw-kafka-client >= 2.5
                       , mtl
                       , resourcet
                       , transformers
@@ -74,7 +74,7 @@ test-suite kafka-client-conduit-test
                       , conduit-extra
                       , extra
                       , hspec
-                      , hw-kafka-client
+                      , hw-kafka-client >= 2.5
                       , mtl
                       , resourcet
                       , transformers

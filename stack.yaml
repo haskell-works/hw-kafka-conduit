@@ -4,7 +4,7 @@ packages:
 - '.'
 
 extra-deps:
-  - hw-kafka-client-2.4.0
+  - hw-kafka-client-2.5.0
 
 flags: {}
 

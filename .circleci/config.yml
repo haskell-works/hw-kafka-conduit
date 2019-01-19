@@ -1,85 +1,39 @@
-version: 2.0
-jobs:
-  build:
-    working_directory: ~/hw-kafka-conduit
-    docker:
-      - image: fpco/stack-build:latest
+version: 2.1
 
-      # - image: confluentinc/cp-zookeeper
-      #   environment:
-      #     ZOOKEEPER_CLIENT_PORT: 2181
+orbs:
+  haskell: haskell-works/haskell-build@1.4.0
+  github: haskell-works/github-release@1.2.1
 
-      # - image: confluentinc/cp-kafka
-      #   environment:
-      #     KAFKA_ZOOKEEPER_CONNECT: "localhost:2181"
-      #     KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://localhost:9092"
-
+commands:
+  build-librdkafka:
+    description: Build librdkafka
     steps:
-      - checkout
-
-      - run:
-          name: Copying scripts
-          command: |
-            mkdir -p ~/.local/bin
-            cp ./scripts/* ~/.local/bin
-
       - restore_cache:
-          keys:
-            - dot-stack-{{ checksum "stack.yaml" }}-{{ checksum "hw-kafka-conduit.cabal" }}
-            - dot-stack
-      - restore_cache:
-          key: stack-work-{{ checksum "stack.yaml" }}
-      - restore_cache:
-          key: librdkafka-{{ checksum "scripts/build-librdkafka" }}
-
+          key: cache--{{ .Environment.CACHE_VERSION }}--librdkafka--{{ checksum "scripts/build-librdkafka" }}
       - run:
           name: Build librdkafka
-          command: build-librdkafka
-
-      - run: stack setup
-      - run: stack build --test --no-run-tests --haddock --no-haddock-deps
-
-      - run:
-          name: Copying docs
-          command: copy-docs
-
-      - run:
-          name: Running unit tests
-          command: stack test
-
+          command: ./scripts/build-librdkafka
       - save_cache:
-          key: dot-stack-base
-          paths:
-            - ~/.stack
+          key: cache--{{ .Environment.CACHE_VERSION }}--librdkafka--{{ checksum "scripts/build-librdkafka" }}
+          paths: .librdkafka
 
-      - save_cache:
-          key: dot-stack-{{ checksum "stack.yaml" }}-{{ checksum "hw-kafka-conduit.cabal" }}
-          paths:
-            - ~/.stack
+workflows:
+  build-app-pipelines:
+    jobs:
+      - haskell/build:
+          name: GHC 8.4.4
+          executor: haskell/ghc-8_4_4
+          before-build: [build-librdkafka]
 
-      - save_cache:
-          key: stack-work-{{ checksum "stack.yaml" }}
-          paths: ~/hw-kafka-conduit/.stack-work
+      - haskell/build:
+          name: GHC 8.6.3
+          executor: haskell/ghc-8_6_3
+          before-build: [build-librdkafka]
 
-      - save_cache:
-          key: librdkafka-{{ checksum "scripts/build-librdkafka" }}
-          paths: ~/hw-kafka-conduit/.librdkafka
-
-      - store_artifacts:
-          path: /tmp/doc
-
-      - deploy:
-          command: |
-            if [ "$CIRCLE_PROJECT_USERNAME" == "haskell-works" ]; then
-              if [[ "$CIRCLE_BRANCH" == master ]]; then
-                when tag autotag
-              elif [[ "$CIRCLE_TAG" =~ v.* ]]; then
-                setup-cred && publish && publish-docs
-              fi
-            fi
-
-deployment:
-  tagged_builds:
-    tag: /v.*/
-    commands:
-      - echo "Make tags run in 2.0"
+      - github/release-cabal:
+          name: GitHub Release
+          requires: [GHC 8.4.4, GHC 8.6.3]
+          checkout: true
+          filters:
+            branches:
+              only: master

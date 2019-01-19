@@ -29,7 +29,7 @@ import           Kafka.Consumer               as X
 kafkaSourceNoClose :: MonadIO m
                    => KafkaConsumer
                    -> Timeout
-                   -> Source m (Either KafkaError (ConsumerRecord (Maybe BS.ByteString) (Maybe BS.ByteString)))
+                   -> ConduitT () (Either KafkaError (ConsumerRecord (Maybe BS.ByteString) (Maybe BS.ByteString))) m ()
 kafkaSourceNoClose c t = go
   where
     go = do
@@ -37,14 +37,14 @@ kafkaSourceNoClose c t = go
       -- stop at some certain cases because it is not goind to be better with time
       case msg of
         Left err | isFatal err -> void $ yield (Left err)
-        _        -> yield msg >> go
+        _                      -> yield msg >> go
 
 -- | Create a `Source` for a given `KafkaConsumer`.
 -- The consumer will be closed automatically when the `Source` is closed.
 kafkaSourceAutoClose :: MonadResource m
                      => KafkaConsumer
                      -> Timeout
-                     -> Source m (Either KafkaError (ConsumerRecord (Maybe BS.ByteString) (Maybe BS.ByteString)))
+                     -> ConduitT () (Either KafkaError (ConsumerRecord (Maybe BS.ByteString) (Maybe BS.ByteString))) m ()
 kafkaSourceAutoClose c ts =
   bracketP mkConsumer clConsumer runHandler
   where
@@ -55,7 +55,7 @@ kafkaSourceAutoClose c ts =
       -- stop at some certain cases because it is not goind to be better with time
       case msg of
         Left err | isFatal err -> void $ yield (Left err)
-        _        -> yield msg >> runHandler c'
+        _                      -> yield msg >> runHandler c'
 
 -- | Creates a kafka producer for given properties and returns a `Source`.
 --
@@ -66,7 +66,7 @@ kafkaSource :: MonadResource m
             => ConsumerProperties
             -> Subscription
             -> Timeout              -- ^ Poll timeout
-            -> Source m (Either KafkaError (ConsumerRecord (Maybe BS.ByteString) (Maybe BS.ByteString)))
+            -> ConduitT () (Either KafkaError (ConsumerRecord (Maybe BS.ByteString) (Maybe BS.ByteString))) m ()
 kafkaSource props sub ts =
   bracketP mkConsumer clConsumer runHandler
   where
@@ -81,100 +81,100 @@ kafkaSource props sub ts =
         -- stop at some certain cases because it is not goind to be better with time
         case msg of
           Left err | isFatal err -> void $ yield (Left err)
-          _        -> yield msg >> runHandler (Right c)
+          _                      -> yield msg >> runHandler (Right c)
 
 ------------------------------- Utitlity functions
 
 -- | Maps over the first element of a value
 --
 -- > mapFirst f = L.map (first f)
-mapFirst :: (Bifunctor t, Monad m) => (k -> k') -> Conduit (t k v) m (t k' v)
+mapFirst :: (Bifunctor t, Monad m) => (k -> k') -> ConduitT (t k v) (t k' v) m ()
 mapFirst f = L.map (first f)
 {-# INLINE mapFirst #-}
 
 -- | Maps over a value
 --
 -- > mapValue f = L.map (fmap f)
-mapValue :: (Functor t, Monad m) => (v -> v') -> Conduit (t v) m (t v')
+mapValue :: (Functor t, Monad m) => (v -> v') -> ConduitT (t v) (t v') m ()
 mapValue f = L.map (fmap f)
 {-# INLINE mapValue #-}
 
 -- | Bimaps (maps over both the first and the second element) over a value
 --
 -- > bimapValue f g = L.map (bimap f g)
-bimapValue :: (Bifunctor t, Monad m) => (k -> k') -> (v -> v') -> Conduit (t k v) m (t k' v')
+bimapValue :: (Bifunctor t, Monad m) => (k -> k') -> (v -> v') -> ConduitT (t k v) (t k' v') m ()
 bimapValue f g = L.map (bimap f g)
 {-# INLINE bimapValue #-}
 
 -- | Sequences the first element of a value
 --
 -- > sequenceValueFirst = L.map sequenceFirst
-sequenceValueFirst :: (Bitraversable t, Applicative f, Monad m) => Conduit (t (f k) v) m (f (t k v))
-sequenceValueFirst = L.map sequenceFirst
+sequenceValueFirst :: (Bitraversable t, Applicative f, Monad m) => ConduitT (t (f k) v) (f (t k v)) m ()
+sequenceValueFirst = L.map (bitraverse id pure)
 {-# INLINE sequenceValueFirst #-}
 
 -- | Sequences the value
 --
 -- > sequenceValue = L.map sequenceA
-sequenceValue :: (Traversable t, Applicative f, Monad m) => Conduit (t (f v)) m (f (t v))
+sequenceValue :: (Traversable t, Applicative f, Monad m) => ConduitT (t (f v)) (f (t v)) m ()
 sequenceValue = L.map sequenceA
 {-# INLINE sequenceValue #-}
 
 -- | Sequences both the first and the second element of a value (bisequences the value)
 --
 -- > bisequenceValue = L.map bisequenceA
-bisequenceValue :: (Bitraversable t, Applicative f, Monad m) => Conduit (t (f k) (f v)) m (f (t k v))
+bisequenceValue :: (Bitraversable t, Applicative f, Monad m) => ConduitT (t (f k) (f v)) (f (t k v)) m ()
 bisequenceValue = L.map bisequenceA
 {-# INLINE bisequenceValue #-}
 
 -- | Traverses over the first element of a value
 --
 -- > traverseValueFirst f = L.map (traverseFirst f)
-traverseValueFirst :: (Bitraversable t, Applicative f, Monad m) => (k -> f k') -> Conduit (t k v) m (f (t k' v))
-traverseValueFirst f = L.map (traverseFirst f)
+traverseValueFirst :: (Bitraversable t, Applicative f, Monad m) => (k -> f k') -> ConduitT (t k v) (f (t k' v)) m ()
+traverseValueFirst f = L.map (bitraverse f pure)
 {-# INLINE traverseValueFirst #-}
 
 -- | Traverses over the value
 --
 -- > L.map (traverse f)
-traverseValue :: (Traversable t, Applicative f, Monad m) => (v -> f v') -> Conduit (t v) m (f (t v'))
+traverseValue :: (Traversable t, Applicative f, Monad m) => (v -> f v') -> ConduitT (t v) (f (t v')) m ()
 traverseValue f = L.map (traverse f)
 {-# INLINE traverseValue #-}
 
 -- | Traverses over both the first and the second elements of a value (bitraverses over a value)
 --
 -- > bitraverseValue f g = L.map (bitraverse f g)
-bitraverseValue :: (Bitraversable t, Applicative f, Monad m) => (k -> f k') -> (v -> f v') -> Conduit (t k v) m (f (t k' v'))
+bitraverseValue :: (Bitraversable t, Applicative f, Monad m) => (k -> f k') -> (v -> f v') -> ConduitT (t k v) (f (t k' v')) m ()
 bitraverseValue f g = L.map (bitraverse f g)
 {-# INLINE bitraverseValue #-}
 
 -- | Monadically traverses over the first element of a value
 --
 -- > traverseValueFirstM f = L.mapM (traverseFirstM f)
-traverseValueFirstM :: (Bitraversable t, Applicative f, Monad m) => (k -> m (f k')) -> Conduit (t k v) m (f (t k' v))
-traverseValueFirstM f = L.mapM (traverseFirstM f)
+traverseValueFirstM :: (Bitraversable t, Applicative f, Monad m) => (k -> m (f k')) -> ConduitT (t k v) (f (t k' v)) m ()
+traverseValueFirstM f = L.mapM (fmap (bitraverse id pure) . bitraverse f pure)
 {-# INLINE traverseValueFirstM #-}
 
 -- | Monadically traverses over a value
 --
 -- > traverseValueM f = L.mapM (traverseM f)
-traverseValueM :: (Traversable t, Applicative f, Monad m) => (v -> m (f v')) -> Conduit (t v) m (f (t v'))
-traverseValueM f = L.mapM (traverseM f)
+traverseValueM :: (Traversable t, Applicative f, Monad m) => (v -> m (f v')) -> ConduitT (t v) (f (t v')) m ()
+traverseValueM f = L.mapM (fmap sequenceA . traverse f)
 {-# INLINE traverseValueM #-}
 
 -- | Monadically traverses over both the first and the second elements of a value
 -- (monadically bitraverses over a value)
 --
 -- > bitraverseValueM f g = L.mapM (bitraverseM f g)
-bitraverseValueM :: (Bitraversable t, Applicative f, Monad m) => (k -> m (f k')) -> (v -> m (f v')) -> Conduit (t k v) m (f (t k' v'))
-bitraverseValueM f g = L.mapM (bitraverseM f g)
+bitraverseValueM :: (Bitraversable t, Applicative f, Monad m) => (k -> m (f k')) -> (v -> m (f v')) -> ConduitT (t k v) (f (t k' v')) m ()
+bitraverseValueM f g = L.mapM (fmap bisequenceA . bimapM f g)
 {-# INLINE bitraverseValueM #-}
 
 --------------------------------------------------------------------------------
 
 -- | Filters out non-fatal errors (see 'isFatal') and only allows fatal errors
 -- to be propagated downstream.
-skipNonFatal :: Monad m => Conduit (Either KafkaError b) m (Either KafkaError b)
+skipNonFatal :: Monad m => ConduitT (Either KafkaError b) (Either KafkaError b) m ()
 skipNonFatal = L.filter (either isFatal (const True))
 {-# INLINE skipNonFatal #-}
 
@@ -212,7 +212,7 @@ isPartitionEOF e = KafkaResponseError RdKafkaRespErrPartitionEof == e
 -- "'KafkaResponseError' 'RdKafkaRespErrTimedOut'" and "'KafkaResponseError' 'RdKafkaRespErrPartitionEof'".
 --
 -- This function does not allow filtering out fatal errors.
-skipNonFatalExcept :: Monad m => [KafkaError -> Bool] -> Conduit (Either KafkaError b) m (Either KafkaError b)
+skipNonFatalExcept :: Monad m => [KafkaError -> Bool] -> ConduitT (Either KafkaError b) (Either KafkaError b) m ()
 skipNonFatalExcept fs =
   let fun e = or $ (\f -> f e) <$> (isFatal : fs)
    in L.filter (either fun (const True))

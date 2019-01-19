@@ -11,16 +11,16 @@ import           Data.Conduit
 import qualified Data.Conduit.List            as L
 import           Kafka.Consumer
 
-import           Kafka.Conduit.Combinators    as X
-import           Kafka.Consumer               as X (KafkaConsumer)
-import           Kafka.Producer               as X
+import Kafka.Conduit.Combinators as X
+import Kafka.Consumer            as X (KafkaConsumer)
+import Kafka.Producer            as X
 
 
 -- | Creates a Sink for a given `KafkaProducer`.
 -- The producer will be closed when the Sink is closed.
 kafkaSinkAutoClose :: MonadResource m
                    => KafkaProducer
-                   -> Sink ProducerRecord m (Maybe KafkaError)
+                   -> ConduitT ProducerRecord Void m (Maybe KafkaError)
 kafkaSinkAutoClose prod =
   bracketP (return prod) (void . closeProducer) runHandler
   where
@@ -38,7 +38,7 @@ kafkaSinkAutoClose prod =
 -- The producer will NOT be closed automatically.
 kafkaSinkNoClose :: MonadIO m
                  => KafkaProducer
-                 -> Sink ProducerRecord m (Maybe KafkaError)
+                 -> ConduitT ProducerRecord Void m (Maybe KafkaError)
 kafkaSinkNoClose prod = go
   where
     go = do
@@ -55,7 +55,7 @@ kafkaSinkNoClose prod = go
 -- The producer will NOT be closed automatically.
 kafkaBatchSinkNoClose :: MonadIO m
                  => KafkaProducer
-                 -> Sink [ProducerRecord] m [(ProducerRecord, KafkaError)]
+                 -> ConduitT [ProducerRecord] Void m [(ProducerRecord, KafkaError)]
 kafkaBatchSinkNoClose prod = go
   where
     go = do
@@ -75,7 +75,7 @@ kafkaBatchSinkNoClose prod = go
 -- 'kafkaSinkAutoClose' or 'kafkaSinkNoClose' can be used.
 kafkaSink :: MonadResource m
           => ProducerProperties
-          -> Sink ProducerRecord m (Maybe KafkaError)
+          -> ConduitT ProducerRecord Void m (Maybe KafkaError)
 kafkaSink props =
   bracketP mkProducer clProducer runHandler
   where
@@ -99,7 +99,7 @@ kafkaSink props =
 --
 -- > mapMC (\_ -> commitAllOffsets OffsetCommit consumer)
 {-# DEPRECATED commitOffsetsSink "Conceptually wrong thing to do. Does not require library support. Consider calling 'commitAllOffsets' when appropriate." #-}
-commitOffsetsSink :: MonadIO m => KafkaConsumer -> Sink i m ()
+commitOffsetsSink :: MonadIO m => KafkaConsumer -> ConduitT i Void m ()
 commitOffsetsSink = flip commitOffsetsSink' (const $ pure ())
 
 -- | Ignores incoming messages and commits offsets. Commit errors are handled with 'handleError' effect.
@@ -108,7 +108,7 @@ commitOffsetsSink = flip commitOffsetsSink' (const $ pure ())
 --
 -- > mapMC (\_ -> commitAllOffsets OffsetCommit consumer >>= handleError)
 {-# DEPRECATED commitOffsetsSink' "Conceptually wrong thing to do. Does not require library support. Consider calling 'commitAllOffsets' when appropriate." #-}
-commitOffsetsSink':: MonadIO m => KafkaConsumer -> (KafkaError -> m ()) -> Sink i m ()
+commitOffsetsSink':: MonadIO m => KafkaConsumer -> (KafkaError -> m ()) -> ConduitT i Void m ()
 commitOffsetsSink' consumer handleError = L.mapM_ $ \_ -> do
   res <- commitAllOffsets OffsetCommit consumer
   case res of
@@ -122,7 +122,7 @@ commitOffsetsSink' consumer handleError = L.mapM_ $ \_ -> do
 --
 -- > mapMC (\_ -> flushProducer producer >>= commitAllOffsets OffsetCommit consumer)
 {-# DEPRECATED flushThenCommitSink "Conceptually wrong thing to do. Does not require library support. Consider calling 'flushProducer >>= commitAllOffsets' when appropriate." #-}
-flushThenCommitSink :: MonadIO m => KafkaConsumer -> KafkaProducer -> Sink i m ()
+flushThenCommitSink :: MonadIO m => KafkaConsumer -> KafkaProducer -> ConduitT i Void m ()
 flushThenCommitSink consumer producer = flushThenCommitSink' consumer producer (const $ pure ())
 
 -- | Ignores incoming messages and commits offsets, but makes sure that 'producer' has an empty outgoing queue.
@@ -132,7 +132,7 @@ flushThenCommitSink consumer producer = flushThenCommitSink' consumer producer (
 --
 -- > mapMC (\_ -> flushProducer producer >>= commitAllOffsets OffsetCommit consumer >>= handleError)
 {-# DEPRECATED flushThenCommitSink' "Conceptually wrong thing to do. Does not require library support. Consider calling 'flushProducer >>= commitAllOffsets' when appropriate." #-}
-flushThenCommitSink' :: MonadIO m => KafkaConsumer -> KafkaProducer -> (KafkaError -> m ()) -> Sink i m ()
+flushThenCommitSink' :: MonadIO m => KafkaConsumer -> KafkaProducer -> (KafkaError -> m ()) -> ConduitT i Void m ()
 flushThenCommitSink' consumer producer handleError = L.mapM_ $ \_ -> do
   flushProducer producer
   res <- commitAllOffsets OffsetCommit consumer

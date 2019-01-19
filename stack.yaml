@@ -1,9 +1,0 @@
-resolver: lts-12.0
-
-packages:
-- '.'
-
-flags: {}
-
-# Extra package databases containing global packages
-extra-package-dbs: []

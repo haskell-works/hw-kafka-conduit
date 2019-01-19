@@ -12,7 +12,7 @@ copyright:           Alexey Raga
 build-type:          Simple
 -- extra-source-files:
 cabal-version:       >=1.10
-description:         Conduit bindings for hw-kafka-client
+description:         Conduit bindings for hw-kafka-client.
 
 flag examples
   default: False

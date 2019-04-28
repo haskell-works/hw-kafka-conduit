@@ -1,39 +1,34 @@
 version: 2.1
 
 orbs:
-  haskell: haskell-works/haskell-build@1.6.2
+  haskell: haskell-works/haskell-build-2@1.6.8
   github: haskell-works/github-release@1.2.1
   hackage: haskell-works/hackage@1.0.0
 
-commands:
-  build-librdkafka:
-    description: Build librdkafka
-    steps:
-      - restore_cache:
-          key: cache--{{ .Environment.CACHE_VERSION }}--librdkafka--{{ checksum "scripts/build-librdkafka" }}
-      - run:
-          name: Build librdkafka
-          command: ./scripts/build-librdkafka
-      - save_cache:
-          key: cache--{{ .Environment.CACHE_VERSION }}--librdkafka--{{ checksum "scripts/build-librdkafka" }}
-          paths: .librdkafka
-
 workflows:
-  build-app-pipelines:
+  multiple-ghc-build:
     jobs:
+      - haskell/build:
+          name: GHC 8.2.2
+          executor: haskell/ghc-8_2_2
+          context: haskell-ci
+
       - haskell/build:
           name: GHC 8.4.4
           executor: haskell/ghc-8_4_4
-          before-build: [build-librdkafka]
+          context: haskell-ci
 
       - haskell/build:
-          name: GHC 8.6.3
-          executor: haskell/ghc-8_6_3
-          before-build: [build-librdkafka]
+          name: GHC 8.6.4
+          executor: haskell/ghc-8_6_4
+          context: haskell-ci
 
       - github/release-cabal:
           name: GitHub Release
-          requires: [GHC 8.4.4, GHC 8.6.3]
+          requires:
+            - GHC 8.2.2
+            - GHC 8.4.4
+            - GHC 8.6.4
           checkout: true
           filters:
             branches:
@@ -45,6 +40,3 @@ workflows:
             - GitHub Release
           username: ${HACKAGE_USER}
           password: ${HACKAGE_PASS}
-          filters:
-            branches:
-              only: master

@@ -79,3 +79,4 @@ test-suite kafka-client-conduit-test
                       , resourcet
                       , transformers
                       , QuickCheck
+  build-tool-depends:   hspec-discover:hspec-discover

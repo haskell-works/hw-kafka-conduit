@@ -1,18 +1,20 @@
-name:                hw-kafka-conduit
-version:             2.6.0
-synopsis:            Conduit bindings for hw-kafka-client
-homepage:            https://github.com/haskell-works/hw-kafka-conduit
-bug-reports:         https://github.com/haskell-works/hw-kafka-conduit/issues
-license:             MIT
-license-file:        LICENSE
-author:              Alexey Raga <alexey.raga@gmail.com>
-maintainer:          Alexey Raga <alexey.raga@gmail.com>
-category:            Database
-copyright:           Alexey Raga
-build-type:          Simple
+cabal-version: 2.2
+
+name:                   hw-kafka-conduit
+version:                2.6.0
+synopsis:               Conduit bindings for hw-kafka-client
+homepage:               https://github.com/haskell-works/hw-kafka-conduit
+bug-reports:            https://github.com/haskell-works/hw-kafka-conduit/issues
+license:                MIT
+license-file:           LICENSE
+author:                 Alexey Raga <alexey.raga@gmail.com>
+maintainer:             Alexey Raga <alexey.raga@gmail.com>
+category:               Database
+copyright:              Alexey Raga
+build-type:             Simple
+tested-with:            GHC == 8.10.1, GHC == 8.8.3, GHC == 8.6.5, GHC == 8.4.4
+description:            Conduit bindings for hw-kafka-client.
 -- extra-source-files:
-cabal-version:       >=1.10
-description:         Conduit bindings for hw-kafka-client.
 
 flag examples
   default: False

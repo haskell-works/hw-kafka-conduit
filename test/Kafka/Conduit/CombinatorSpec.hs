@@ -2,16 +2,18 @@
 
 module Kafka.Conduit.CombinatorSpec (spec) where
 
-import           Data.Conduit
-import qualified Data.Conduit.List         as CL
-import           Data.List.Extra
-import           Kafka.Conduit.Combinators
-import           Prelude                   as P
-import           Test.Hspec
-import           Test.QuickCheck
+import Data.Conduit
+import Data.List.Extra
+import Kafka.Conduit.Combinators
+import Prelude
+import Test.Hspec
+import Test.QuickCheck
 
-{-# ANN module ("HLint: ignore Redundant do"        :: String) #-}
-{-# ANN module ("HLint: ignore Reduce duplication"  :: String) #-}
+import qualified Data.Conduit.List as CL
+import qualified Prelude           as P
+
+{- HLINT ignore "Reduce duplication"  -}
+{- HLINT ignore "Redundant do"        -}
 
 spec :: Spec
 spec = describe "Kafka.Conduit.UtilSpec" $ do

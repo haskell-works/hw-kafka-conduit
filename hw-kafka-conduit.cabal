@@ -12,7 +12,7 @@ maintainer:             Alexey Raga <alexey.raga@gmail.com>
 category:               Database
 copyright:              Alexey Raga
 build-type:             Simple
-tested-with:            GHC == 8.10.1, GHC == 8.8.3, GHC == 8.6.5, GHC == 8.4.4
+tested-with:            GHC == 8.10.2, GHC == 8.8.3, GHC == 8.6.5, GHC == 8.4.4
 description:            Conduit bindings for hw-kafka-client.
 -- extra-source-files:
 
